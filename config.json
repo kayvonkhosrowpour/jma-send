@@ -1,0 +1,24 @@
+{
+  "customers_csv": "path/to/my/customers.csv",
+  "schedule_xlsx": "path/to/my/schedule.xlsx",
+  "programs": [
+      {
+        "kicksite_title": "Kids TKD",
+        "schedule_title": "Kids",
+        "template_path": "path/to/kids_template.html"
+      },
+      {
+        "kicksite_title": "Lil Tigers",
+        "schedule_title": "Lil Tigers",
+        "template_path": "path/to/lil_tigers_template.html"
+      }
+    ],
+  "send_time_map": {
+    "before_noon": "8:00AM",
+    "noon": "8:00AM",
+    "after_noon": "12:00PM"
+  },
+  "batch_wait_time_sec": 360,
+  "batch_wait_time_jitter": true,
+  "batch_size": 10
+}

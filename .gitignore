@@ -1,0 +1,7 @@
+# data files
+*.csv
+*.xlsx
+
+# IDE files
+*.sublime-project
+*.sublime-workspace
