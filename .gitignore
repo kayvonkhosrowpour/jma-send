@@ -5,3 +5,11 @@
 # IDE files
 *.sublime-project
 *.sublime-workspace
+
+# python files
+.DS_Store
+.ipynb_checkpoints/
+__pycache__/
+
+# log files
+logs/*.log

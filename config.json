@@ -1,24 +1,62 @@
 {
-  "customers_csv": "path/to/my/customers.csv",
-  "schedule_xlsx": "path/to/my/schedule.xlsx",
-  "programs": [
-      {
-        "kicksite_title": "Kids TKD",
-        "schedule_title": "Kids",
-        "template_path": "path/to/kids_template.html"
-      },
-      {
-        "kicksite_title": "Lil Tigers",
-        "schedule_title": "Lil Tigers",
-        "template_path": "path/to/lil_tigers_template.html"
-      }
-    ],
+  "customers_path": "students_test_subset.csv",
+  "schedule_path": "schedule.xlsx",
   "send_time_map": {
-    "before_noon": "8:00AM",
-    "noon": "8:00AM",
+    "before_or_at_noon": "8:00AM",
     "after_noon": "12:00PM"
   },
-  "batch_wait_time_sec": 360,
-  "batch_wait_time_jitter": true,
-  "batch_size": 10
+  "batch_wait_time_sec": 1,
+  "batch_size": 10,
+  "email_groups": [
+    {
+      "schedule_name": "Lil Tigers",
+      "kicksite_recipients": ["Lil Tigers"],
+      "template_path": null
+    },
+    {
+      "schedule_name": "Kids",
+      "kicksite_recipients": ["Kids TKD"],
+      "template_path": null
+    },
+    {
+      "schedule_name": "Teens/Adults",
+      "kicksite_recipients": ["Teens TKD", "Adults TKD"],
+      "template_path": "templates/example.html"
+    },
+    {
+      "schedule_name": "Hyper Pro and Sports Clinic",
+      "kicksite_recipients": ["Hyper Pro Training"],
+      "template_path": null
+    },
+    {
+      "schedule_name": "LIVE High 5 Chat LT/Kids (Mat chat)",
+      "kicksite_recipients": ["Kids TKD", "Lil Tigers"],
+      "template_path": null
+    },
+    {
+      "schedule_name": "LIVE Chat Teens/Adults (Mat Chat)",
+      "kicksite_recipients": ["Adults TKD", "Teens TKD"],
+      "template_path": null
+    },
+    {
+      "schedule_name": "Ultimate Leadership Training",
+      "kicksite_recipients": ["Ultimate Leadership Training"],
+      "template_path": null
+    },
+    {
+      "schedule_name": "Living Fit (Teens/Adults Fitness)",
+      "kicksite_recipients": ["Adults TKD", "Kids TKD", "Teens TKD", "Lil Tigers"],
+      "template_path": null
+    },
+    {
+      "schedule_name": "If recipients are null or empty, will not process (1)",
+      "kicksite_recipients": null,
+      "template_path": null
+    },
+    {
+      "schedule_name": "If recipients are null or empty, will not process (2)",
+      "kicksite_recipients": null,
+      "template_path": null
+    }
+  ]
 }
