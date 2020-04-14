@@ -1,4 +1,5 @@
 # data files
+data/
 *.csv
 *.xlsx
 
@@ -13,3 +14,7 @@ __pycache__/
 
 # log files
 logs/*.log
+
+# pycharm
+.idea/*
+.idea/

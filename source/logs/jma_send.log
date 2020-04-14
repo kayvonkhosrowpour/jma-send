@@ -1,0 +1,148 @@
+2020-04-13 20:03:53,100 [WARNI]  email_sender.py launched at 2020-04-13 20:03:53.100070
+2020-04-13 20:04:26,082 [WARNI ]  email_sender.py launched at 2020-04-13 20:04:26.082167
+2020-04-13 20:04:46,860 [WARNIN]  email_sender.py launched at 2020-04-13 20:04:46.859879
+2020-04-13 20:05:02,479 [WARNING]  email_sender.py launched at 2020-04-13 20:05:02.478900
+2020-04-13 20:05:25,973 [WARNING]  email_sender.py launched at 2020-04-13 20:05:25.973641
+2020-04-13 20:07:07,083 [WARNING]  email_sender.py launched at 2020-04-13 20:07:07.083459
+2020-04-13 20:07:07,101 [WARNING]  No classes found for today (Su). Only found for Index(['Unnamed: 0', 'M', 'T', 'W', 'Th', 'F', 'Sa', 'Unnamed: 7'], dtype='object')
+2020-04-13 20:07:07,101 [WARNING]  0 emails have been sent today.
+2020-04-13 20:08:05,847 [WARNING]  email_sender.py launched at 2020-04-13 20:08:05.846849
+2020-04-13 20:08:05,864 [WARNING]  No classes found for today (Su). Only found for ['Unnamed: 0', 'M', 'T', 'W', 'Th', 'F', 'Sa', 'Unnamed: 7']
+2020-04-13 20:08:05,864 [WARNING]  0 emails have been sent today.
+2020-04-13 20:08:14,074 [WARNING]  email_sender.py launched at 2020-04-13 20:08:14.074343
+2020-04-13 20:08:14,092 [WARNING]  No classes found for today (Su). Only found for ['Unnamed: 0', 'M', 'T', 'W', 'Th', 'F', 'Sa', 'Unnamed: 7']
+2020-04-13 20:08:14,092 [WARNING]  0 emails have been sent today.
+2020-04-13 20:08:33,063 [WARNING]  email_sender.py launched at 2020-04-13 20:08:33.063150
+2020-04-13 20:08:33,080 [WARNING]  No classes found for today (Su). Only found for ['Unnamed: 0', 'M', 'T', 'W', 'Th', 'F', 'Sa', 'Unnamed: 7']
+2020-04-13 20:08:33,081 [WARNING]  0 emails have been sent today.
+2020-04-13 20:08:45,902 [WARNING]  No classes found for today (Su). Only found for ['Unnamed: 0', 'M', 'T', 'W', 'Th', 'F', 'Sa', 'Unnamed: 7']
+2020-04-13 20:08:45,902 [WARNING]  0 emails have been sent today.
+2020-04-13 20:11:30,746 [WARNING]  No classes found for today (Su). Only found for Index(['M', 'T', 'W', 'Th', 'F', 'Sa'], dtype='object')
+2020-04-13 20:11:30,746 [WARNING]  0 emails have been sent today.
+2020-04-13 20:11:37,068 [WARNING]  No classes found for today (Su). Only found for ['M', 'T', 'W', 'Th', 'F', 'Sa']
+2020-04-13 20:11:37,068 [WARNING]  0 emails have been sent today.
+2020-04-13 21:09:42,268 [INFO]  email_sender.py launched at 2020-04-13 21:09:42.268403
+2020-04-13 21:09:42,312 [INFO]  Sending 57 emails for Teens/Adults
+2020-04-13 21:09:42,312 [INFO]  - [0:10] of 0 to 56
+2020-04-13 21:09:42,312 [INFO]  - [10:20] of 0 to 56
+2020-04-13 21:09:42,313 [INFO]  - [20:30] of 0 to 56
+2020-04-13 21:09:42,313 [INFO]  - [30:40] of 0 to 56
+2020-04-13 21:09:42,313 [INFO]  - [40:50] of 0 to 56
+2020-04-13 21:09:42,314 [INFO]  - [50:57] of 0 to 56
+2020-04-13 21:10:31,815 [INFO]  email_sender.py launched at 2020-04-13 21:10:31.815863
+2020-04-13 21:10:31,860 [INFO]  Sending 57 emails for Teens/Adults
+2020-04-13 21:10:31,860 [INFO]  - [0:10] of 0 to 56
+2020-04-13 21:10:31,860 [INFO]    - Sent emails!
+2020-04-13 21:10:32,865 [INFO]  - [10:20] of 0 to 56
+2020-04-13 21:10:32,866 [INFO]    - Sent emails!
+2020-04-13 21:10:33,870 [INFO]  - [20:30] of 0 to 56
+2020-04-13 21:10:33,872 [INFO]    - Sent emails!
+2020-04-13 21:10:34,873 [INFO]  - [30:40] of 0 to 56
+2020-04-13 21:10:34,874 [INFO]    - Sent emails!
+2020-04-13 21:11:03,070 [INFO]  email_sender.py launched at 2020-04-13 21:11:03.070529
+2020-04-13 21:11:03,115 [INFO]  Sending 57 emails for Teens/Adults
+2020-04-13 21:11:03,115 [INFO]  - [0:10] of 0 to 56
+2020-04-13 21:11:03,115 [INFO]    - Sent emails!
+2020-04-13 21:11:03,116 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:11:04,119 [INFO]  - [10:20] of 0 to 56
+2020-04-13 21:11:04,120 [INFO]    - Sent emails!
+2020-04-13 21:11:04,120 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:11:05,126 [INFO]  - [20:30] of 0 to 56
+2020-04-13 21:11:05,127 [INFO]    - Sent emails!
+2020-04-13 21:11:05,127 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:11:06,129 [INFO]  - [30:40] of 0 to 56
+2020-04-13 21:11:06,130 [INFO]    - Sent emails!
+2020-04-13 21:11:06,130 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:11:07,133 [INFO]  - [40:50] of 0 to 56
+2020-04-13 21:11:07,134 [INFO]    - Sent emails!
+2020-04-13 21:11:07,134 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:11:08,139 [INFO]  - [50:57] of 0 to 56
+2020-04-13 21:11:08,140 [INFO]    - Sent emails!
+2020-04-13 21:11:08,141 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:11:33,568 [INFO]  email_sender.py launched at 2020-04-13 21:11:33.568311
+2020-04-13 21:11:33,609 [INFO]  Sending 57 emails for Teens/Adults
+2020-04-13 21:11:49,009 [INFO]  email_sender.py launched at 2020-04-13 21:11:49.009640
+2020-04-13 21:11:49,052 [INFO]  Sending 57 emails for Teens/Adults
+2020-04-13 21:11:49,052 [INFO]  - [0:10]
+2020-04-13 21:11:49,052 [INFO]    - Sent emails!
+2020-04-13 21:11:49,053 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:11:50,058 [INFO]  - [10:20]
+2020-04-13 21:11:50,059 [INFO]    - Sent emails!
+2020-04-13 21:11:50,060 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:11:51,062 [INFO]  - [20:30]
+2020-04-13 21:11:51,063 [INFO]    - Sent emails!
+2020-04-13 21:11:51,064 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:11:52,066 [INFO]  - [30:40]
+2020-04-13 21:11:52,067 [INFO]    - Sent emails!
+2020-04-13 21:11:52,067 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:11:53,072 [INFO]  - [40:50]
+2020-04-13 21:11:53,073 [INFO]    - Sent emails!
+2020-04-13 21:11:53,073 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:11:54,079 [INFO]  - [50:57]
+2020-04-13 21:11:54,080 [INFO]    - Sent emails!
+2020-04-13 21:11:54,080 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:14:18,672 [INFO]  email_sender.py launched at 2020-04-13 21:14:18.672858
+2020-04-13 21:14:18,715 [INFO]  Sending 57 emails for Teens/Adults
+2020-04-13 21:14:18,715 [INFO]  - [0:10]
+2020-04-13 21:14:18,716 [INFO]    - Sent emails!
+2020-04-13 21:14:18,716 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:14:19,721 [INFO]  - [10:20]
+2020-04-13 21:14:19,722 [INFO]    - Sent emails!
+2020-04-13 21:14:19,723 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:14:20,726 [INFO]  - [20:30]
+2020-04-13 21:14:20,727 [INFO]    - Sent emails!
+2020-04-13 21:14:20,727 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:20:24,732 [INFO]  email_sender.py launched at 2020-04-13 21:20:24.732277
+2020-04-13 21:22:40,475 [INFO]  email_sender.py launched at 2020-04-13 21:22:40.474990
+2020-04-13 21:22:40,503 [ERROR]  No valid email groups were found!
+2020-04-13 21:23:03,993 [INFO]  email_sender.py launched at 2020-04-13 21:23:03.993904
+2020-04-13 21:23:04,033 [INFO]  Sending 57 emails for Teens/Adults
+2020-04-13 21:23:04,034 [INFO]  - [0:10]
+2020-04-13 21:23:04,034 [INFO]    - Sent emails!
+2020-04-13 21:23:04,034 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:23:05,035 [INFO]  - [10:20]
+2020-04-13 21:23:05,037 [INFO]    - Sent emails!
+2020-04-13 21:23:05,037 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:23:06,041 [INFO]  - [20:30]
+2020-04-13 21:23:06,042 [INFO]    - Sent emails!
+2020-04-13 21:23:06,043 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:23:07,047 [INFO]  - [30:40]
+2020-04-13 21:23:07,048 [INFO]    - Sent emails!
+2020-04-13 21:23:07,048 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:23:08,052 [INFO]  - [40:50]
+2020-04-13 21:23:08,053 [INFO]    - Sent emails!
+2020-04-13 21:23:08,053 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:23:09,056 [INFO]  - [50:57]
+2020-04-13 21:23:09,057 [INFO]    - Sent emails!
+2020-04-13 21:23:09,058 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:32:36,222 [INFO]  email_sender.py launched at 2020-04-13 21:32:36.222454
+2020-04-13 21:32:36,262 [INFO]  Sending 57 emails for Teens/Adults
+2020-04-13 21:32:36,262 [INFO]  - [0:10]
+2020-04-13 21:32:36,262 [INFO]    - Sent emails!
+2020-04-13 21:32:36,262 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:32:37,265 [INFO]  - [10:20]
+2020-04-13 21:32:37,266 [INFO]    - Sent emails!
+2020-04-13 21:32:37,267 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:32:38,270 [INFO]  - [20:30]
+2020-04-13 21:32:38,272 [INFO]    - Sent emails!
+2020-04-13 21:32:38,272 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:32:39,277 [INFO]  - [30:40]
+2020-04-13 21:32:39,278 [INFO]    - Sent emails!
+2020-04-13 21:32:39,279 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:32:40,284 [INFO]  - [40:50]
+2020-04-13 21:32:40,285 [INFO]    - Sent emails!
+2020-04-13 21:32:40,285 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:32:41,287 [INFO]  - [50:57]
+2020-04-13 21:32:41,288 [INFO]    - Sent emails!
+2020-04-13 21:32:41,288 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:36:42,107 [INFO]  email_sender.py launched at 2020-04-13 21:36:42.107804
+2020-04-13 21:36:42,148 [INFO]  Sending 57 emails for Teens/Adults
+2020-04-13 21:36:42,148 [INFO]  - [0:10]
+2020-04-13 21:36:42,148 [INFO]    - Sent emails!
+2020-04-13 21:36:42,149 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:36:43,154 [INFO]  - [10:20]
+2020-04-13 21:36:43,155 [INFO]    - Sent emails!
+2020-04-13 21:36:43,155 [INFO]    - Sleeping for 1 sec...
+2020-04-13 21:36:44,161 [INFO]  - [20:30]
+2020-04-13 21:36:44,162 [INFO]    - Sent emails!
+2020-04-13 21:36:44,162 [INFO]    - Sleeping for 1 sec...

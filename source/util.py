@@ -8,6 +8,12 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 
+def get_todays_weekday():
+    lookup = {i:weekday for i, weekday in enumerate(['M', 'T', 'W', 'Th', 'F', 'Sa', 'Su'])}
+    
+    return lookup[pd.Timestamp.today().weekday()]
+
+
 def prepare_filepath(filepath, _raise=True):
     filepath = os.path.normpath(filepath)
 
@@ -33,13 +39,13 @@ def explode_str(df, col, sep):
     return df
 
 
-def read_frame(filepath):
+def read_frame(filepath, index_col=None):
     df = None
 
     if filepath.endswith('.csv'):
-        df = pd.read_csv(filepath)
+        df = pd.read_csv(filepath, index_col=index_col)
     elif filepath.endswith('.xlsx'):
-        df = pd.read_excel(filepath)
+        df = pd.read_excel(filepath, index_col=index_col)
 
     return df
 
@@ -65,7 +71,7 @@ def send_email(to, _from, subject, html_body):
     msg.attach(MIMEText(html_body, 'html'))
 
     # send the message via our SMTP server
-    s = smtplib.SMTP('localhost:1025') # TODO: replace with exchange
+    s = smtplib.SMTP('localhost:1025')  # TODO: replace with exchange
     s.sendmail(_from, to, msg.as_string())
     s.quit()
 
@@ -78,5 +84,3 @@ def save_append_dataframe(filepath, new_df):
         new_df = pd.concat((df, new_df))
 
     new_df.to_csv(filepath, index=False)
-
-    print('Output', filepath)

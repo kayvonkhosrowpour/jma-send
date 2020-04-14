@@ -1,9 +1,9 @@
 {
-  "customers_path": "students_test_subset.csv",
-  "schedule_path": "schedule.xlsx",
+  "customers_path": "data/students_test_subset.csv",
+  "schedule_path": "data/schedule.xlsx",
   "send_time_map": {
-    "before_or_at_noon": "8:00AM",
-    "after_noon": "12:00PM"
+    "morning_and_noon": "8:00AM",
+    "afternoon": "12:00PM"
   },
   "batch_wait_time_sec": 1,
   "batch_size": 10,
@@ -11,52 +11,56 @@
     {
       "schedule_name": "Lil Tigers",
       "kicksite_recipients": ["Lil Tigers"],
-      "template_path": null
+      "template_path": null,
+      "subject_title": null
     },
     {
       "schedule_name": "Kids",
       "kicksite_recipients": ["Kids TKD"],
-      "template_path": null
+      "template_path": null,
+      "subject_title": null
     },
     {
       "schedule_name": "Teens/Adults",
       "kicksite_recipients": ["Teens TKD", "Adults TKD"],
-      "template_path": "templates/example.html"
-    },
-    {
-      "schedule_name": "Hyper Pro and Sports Clinic",
-      "kicksite_recipients": ["Hyper Pro Training"],
-      "template_path": null
+      "template_path": "templates/example.html",
+      "subject_title": "Teens and Adults TKD Today! | Journey Martial Arts"
     },
     {
       "schedule_name": "LIVE High 5 Chat LT/Kids (Mat chat)",
       "kicksite_recipients": ["Kids TKD", "Lil Tigers"],
-      "template_path": null
+      "template_path": null,
+      "subject_title": null
     },
     {
       "schedule_name": "LIVE Chat Teens/Adults (Mat Chat)",
       "kicksite_recipients": ["Adults TKD", "Teens TKD"],
-      "template_path": null
+      "template_path": null,
+      "subject_title": null
     },
     {
       "schedule_name": "Ultimate Leadership Training",
       "kicksite_recipients": ["Ultimate Leadership Training"],
-      "template_path": null
+      "template_path": null,
+      "subject_title": null
     },
     {
       "schedule_name": "Living Fit (Teens/Adults Fitness)",
       "kicksite_recipients": ["Adults TKD", "Kids TKD", "Teens TKD", "Lil Tigers"],
-      "template_path": null
+      "template_path": null,
+      "subject_title": null
     },
     {
       "schedule_name": "If recipients are null or empty, will not process (1)",
       "kicksite_recipients": null,
-      "template_path": null
+      "template_path": null,
+      "subject_title": null
     },
     {
       "schedule_name": "If recipients are null or empty, will not process (2)",
       "kicksite_recipients": null,
-      "template_path": null
+      "template_path": null,
+      "subject_title": null
     }
   ]
 }
