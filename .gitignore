@@ -13,9 +13,9 @@ data/
 __pycache__/
 
 # log files
-source/logs/**
 *.log
-source/logs/jma_send.log
+./source/logs/**
+./source/logs/jma_send.log
 
 # pycharm
 .idea/*
