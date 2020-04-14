@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import os
 import sys
 import traceback
@@ -41,6 +42,7 @@ def get_customers(config, logger):
 
 
 def get_valid_email_groups(config, logger):
+
     email_groups = []
 
     for email_group in config['email_groups']:
@@ -48,36 +50,57 @@ def get_valid_email_groups(config, logger):
         # get fields
         sch_name = email_group['schedule_name']
         recipients = email_group['kicksite_recipients']
-        template_path = email_group['template_path']
+        body_path = email_group['body_path']
         subject_title = email_group['subject_title']
 
         # validate fields
         valid_schedule_name = sch_name is not None and len(sch_name) > 0
         valid_recipients = recipients is not None and len(recipients) > 0
 
-        valid_template = template_path is not None
-        valid_template = valid_template and len(template_path) > 0
-        valid_template = valid_template and os.path.exists(os.path.normpath(template_path))
+        valid_html_body = body_path is not None
+        valid_html_body = valid_html_body and len(body_path) > 0
+        valid_html_body = valid_html_body and os.path.exists(os.path.normpath(body_path))
 
         valid_sub = subject_title is not None and len(subject_title) > 0
 
         valid_html = False
-        if valid_template:
-            valid_html, errors = common.is_valid_html(template_path)
+        if valid_html_body:
+            valid_html, errors = common.is_valid_html(body_path)
             if not valid_html:
                 logger.error('Invalid HTML at {} with errors: {}'
-                             .format(template_path, errors))
+                             .format(body_path, errors))
 
-        if valid_schedule_name and valid_recipients and valid_template and valid_html and valid_sub:
+        if valid_schedule_name and valid_recipients and valid_html_body and valid_html and valid_sub:
             email_groups.append(email_group)
 
     return email_groups
 
 
-def schedule_emails(config, email_groups, logger):
-    email_log_df = pd.DataFrame(columns=['Recipient', 'EmailGroup', 'SubjectTitle',
-                                         'TemplatePath', 'DateTimeSent'])
+def schedule_subset_time(schedule_subset_df, start_datetime, batch_size, batch_wait_time_sec):
+    schedule_subset_df = schedule_subset_df.sort_values(by=['EmailGroup'])
 
+    # TODO: none of this works :)
+
+    for email_group in schedule_subset_df.EmailGroup.unique():
+
+
+
+        idx = 0
+        next_datetime = start_datetime
+
+        while idx < schedule_subset_df.shape[0]:
+            max_idx = min(idx + batch_size, schedule_subset_df.shape[0])
+
+            # move to next batch and datetime
+            idx += batch_size
+            next_datetime += batch_wait_time_sec
+
+
+def schedule_emails(config, email_groups, classes_today, logger):
+    scheduled_df = pd.DataFrame(columns=['Recipient', 'EmailGroup', 'SubjectTitle',
+                                         'Body', 'ScheduledTime', 'DatetimeSent'])
+
+    # create df for each recipient in an email group
     for email_group in email_groups:
         # get all recipients for this email group (CASE-SENSITIVE)
         lower_recipients = [recip.lower() for recip in email_group['kicksite_recipients']]
@@ -85,18 +108,40 @@ def schedule_emails(config, email_groups, logger):
 
         # create new df for this group and concat
         eg_df = pd.DataFrame(data={'Recipient': recipients.Email})
-        eg_df['EmailGroup'] = email_group['schedule_name']
-        eg_df['SubjectTitle'] = email_group['subject_title']
-        eg_df['TemplatePath'] = os.path.realpath(email_group['template_path'])
-        email_log_df = pd.concat((email_log_df, eg_df))
+        eg_df.EmailGroup = email_group['schedule_name']
+        eg_df.SubjectTitle = email_group['subject_title']
+        eg_df.Body = os.path.realpath(email_group['body_path'])
 
-    email_log_df.reset_index()
+        scheduled_df = pd.concat((scheduled_df, eg_df))
 
-    logger.info('Prepared to send {} emails out today'.format(email_log_df.shape[0]))
+    scheduled_df.reset_index()
 
-    print(email_log_df)
+    logger.info('Prepared to send {} emails out today'.format(scheduled_df.shape[0]))
 
-    # TODO: break into morning_and_noon.csv, and afternoon.csv using `config`
+    # split into morning_and_noon and afternoon by class time
+    today_at_noon = np.datetime64(str(np.datetime64('today')) + 'T12:00')
+
+    morning_and_noon_classes = classes_today[classes_today <= today_at_noon].index
+    afternoon_classes = classes_today[classes_today > today_at_noon].index
+
+    morning_and_noon_scheduled_df = scheduled_df[scheduled_df.EmailGroup.isin(morning_and_noon_classes)]
+    afternoon_scheduled_df = scheduled_df[scheduled_df.EmailGroup.isin(afternoon_classes)]
+
+    # get scheduling configuration
+    batch_size = config['batch_size']
+    batch_wait_time_sec = config['batch_wait_time_sec']
+
+    # schedule the emails
+    schedule_subset_time(morning_and_noon_scheduled_df,
+                         config['start_send_time_map']['morning_and_noon'],
+                         batch_size,
+                         batch_wait_time_sec)
+
+    schedule_subset_time(afternoon_scheduled_df,
+                         config['start_send_time_map']['afternoon'],
+                         batch_size,
+                         batch_wait_time_sec)
+
 
 
 if __name__ == '__main__':
@@ -122,4 +167,4 @@ if __name__ == '__main__':
         sys.exit(1)
 
     # schedule the emails
-    schedule_emails(config, email_groups, logging)
+    schedule_emails(config, email_groups, classes_today, logging)

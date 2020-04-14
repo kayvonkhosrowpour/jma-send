@@ -69,7 +69,16 @@ def read_config(logger):
     data['schedule_path'] = norm_path_and_join(prefix, data['schedule_path'])
 
     for email_group in data['email_groups']:
-        email_group['template_path'] = norm_path_and_join(prefix, email_group['template_path'])
+        email_group['body_path'] = norm_path_and_join(prefix, email_group['body_path'])
+
+    # set datetimes
+    data['start_send_time_map']['morning_and_noon'] = np.datetime64('{}T{}'.format(str(np.datetime64('today')),
+                                                                    data['start_send_time_map']['morning_and_noon']))
+    data['start_send_time_map']['afternoon'] = np.datetime64('{}T{}'.format(str(np.datetime64('today')),
+                                                             data['start_send_time_map']['afternoon']))
+
+    # set scheduling config
+    data['batch_wait_time_sec'] = np.timedelta64(data['batch_wait_time_sec'], 's')
 
     return data
 
