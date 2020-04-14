@@ -146,3 +146,26 @@
 2020-04-13 21:36:44,161 [INFO]  - [20:30]
 2020-04-13 21:36:44,162 [INFO]    - Sent emails!
 2020-04-13 21:36:44,162 [INFO]    - Sleeping for 1 sec...
+2020-04-14 11:14:34,670 [INFO]  scheduler.py launched at 2020-04-14 11:14:34.670460
+2020-04-14 11:19:30,143 [INFO] scheduler.py launched at 2020-04-14 11:19:30.143382
+2020-04-14 11:20:49,893 [INFO] scheduler.py launched at 2020-04-14 11:20:49.893215
+2020-04-14 12:14:11,999 [INFO] scheduler.py launched at 2020-04-14 12:14:11.999703
+2020-04-14 12:23:30,787 [INFO] scheduler.py launched at 2020-04-14 12:23:30.787277
+2020-04-14 12:24:22,735 [INFO] scheduler.py launched at 2020-04-14 12:24:22.735126
+2020-04-14 12:24:30,566 [INFO] scheduler.py launched at 2020-04-14 12:24:30.566636
+2020-04-14 12:25:21,354 [INFO] scheduler.py launched at 2020-04-14 12:25:21.354124
+2020-04-14 12:26:07,895 [INFO] scheduler.py launched at 2020-04-14 12:26:07.895401
+2020-04-14 12:26:48,811 [INFO] scheduler.py launched at 2020-04-14 12:26:48.811899
+2020-04-14 12:26:48,850 [INFO] Prepared to send 1 emails out today
+2020-04-14 12:27:13,979 [INFO] scheduler.py launched at 2020-04-14 12:27:13.979676
+2020-04-14 12:27:14,014 [INFO] Prepared to send 1 emails out today
+2020-04-14 12:27:35,030 [INFO] scheduler.py launched at 2020-04-14 12:27:35.030224
+2020-04-14 12:27:35,064 [INFO] Prepared to send 57 emails out today
+2020-04-14 12:28:23,943 [INFO] scheduler.py launched at 2020-04-14 12:28:23.943345
+2020-04-14 12:28:23,978 [INFO] Prepared to send 57 emails out today
+2020-04-14 12:28:35,349 [INFO] scheduler.py launched at 2020-04-14 12:28:35.349176
+2020-04-14 12:28:35,383 [INFO] Prepared to send 57 emails out today
+2020-04-14 12:29:03,586 [INFO] scheduler.py launched at 2020-04-14 12:29:03.586431
+2020-04-14 12:29:03,620 [INFO] Prepared to send 57 emails out today
+2020-04-14 12:30:19,123 [INFO] scheduler.py launched at 2020-04-14 12:30:19.123553
+2020-04-14 12:30:19,161 [INFO] Prepared to send 132 emails out today

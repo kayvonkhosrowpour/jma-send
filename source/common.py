@@ -4,8 +4,33 @@ import os
 import json
 import tidylib
 import smtplib
+import logging
+import sys
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+
+
+CONFIG_FILEPATH = '../config.json'
+LOGFILE = './logs/jma_send.log'
+TRANSACTION_FILEPATH = './logs/transaction_log.csv'
+
+
+def setup_logging(filename, level=logging.DEBUG):
+    log_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
+
+    file_handler = logging.FileHandler(os.path.normpath(LOGFILE))
+    file_handler.setFormatter(log_formatter)
+    root_logger.addHandler(file_handler)
+
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(log_formatter)
+    root_logger.addHandler(console_handler)
+
+    logging.info('{} launched at {}'.format(filename, str(pd.Timestamp.today())))
+
+    return logging
 
 
 def get_todays_weekday():
@@ -23,9 +48,28 @@ def prepare_filepath(filepath, _raise=True):
     return filepath
 
 
-def read_config(filepath):
-    with open(prepare_filepath(filepath)) as f:
+def norm_path_and_join(prefix, filepath):
+    if filepath:
+        filepath = os.path.normpath(filepath)
+        filepath = os.path.join(prefix, filepath)
+
+    return filepath
+
+
+def read_config(logger):
+    logger.info('Loading config file from {}'.format(CONFIG_FILEPATH))
+
+    with open(prepare_filepath(CONFIG_FILEPATH)) as f:
         data = json.load(f)
+
+    # set paths relative to config file
+    prefix = os.path.dirname(CONFIG_FILEPATH)
+
+    data['customers_path'] = norm_path_and_join(prefix, data['customers_path'])
+    data['schedule_path'] = norm_path_and_join(prefix, data['schedule_path'])
+
+    for email_group in data['email_groups']:
+        email_group['template_path'] = norm_path_and_join(prefix, email_group['template_path'])
 
     return data
 

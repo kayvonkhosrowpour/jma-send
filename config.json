@@ -17,8 +17,8 @@
     {
       "schedule_name": "Kids",
       "kicksite_recipients": ["Kids TKD"],
-      "template_path": null,
-      "subject_title": null
+      "template_path": "templates/example.html",
+      "subject_title": "Kids TKD Today! | Journey Martial Arts"
     },
     {
       "schedule_name": "Teens/Adults",
