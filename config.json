@@ -5,8 +5,8 @@
     "morning_and_noon": "08:00",
     "afternoon": "12:00"
   },
-  "batch_wait_time_sec": 1,
-  "batch_size": 10,
+  "batch_wait_time_sec": 360,
+  "batch_size": 3,
   "email_groups": [
     {
       "schedule_name": "Lil Tigers",
