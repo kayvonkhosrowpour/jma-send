@@ -27,8 +27,9 @@ def validate_customers(field, value, error):
     if not customers.shape[0] > 0:
         error(field, 'no customers')
 
-    required_columns = set(['Emails', 'Programs', 'Subscribed'])
-    if len(required_columns.intersection(set(customers.columns))) != len(required_columns):
+    required_columns = ['Emails', 'Programs', 'Subscribed']
+
+    if len(set(required_columns).intersection(set(customers.columns))) != len(required_columns):
         error(field, 'Customers spreadsheet missing at least one of {} columns'
                      .format(required_columns))
 
@@ -37,12 +38,11 @@ def validate_schedule(field, value, error):
     if not validate_filepath(field, value, error):
         return
 
-    schedule = common.read_frame(value, index_col=0)
+    schedule = common.read_frame(value, index_col=0).columns.tolist()
 
-    required_columns = set(['M', 'T', 'W', 'Th', 'F', 'Sa'])
-    if len(required_columns.intersection(set(schedule.columns))) != len(required_columns):
-        error(field, 'Customers spreadsheet missing at least one of {} columns'
-                     .format(required_columns))
+    days = ['M', 'T', 'W', 'Th', 'F', 'Sa']
+    if len(days) != len(schedule) or len([x for x, y in zip(days, schedule) if x != y]) > 0:
+        error(field, 'Customers spreadsheet columns {} do not match {}'.format(schedule, days))
 
 
 def validate_email_groups(config):
