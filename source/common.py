@@ -6,6 +6,7 @@ import tidylib
 import smtplib
 import logging
 import sys
+import validate
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -60,27 +61,33 @@ def read_config(logger):
     logger.info('Loading config file from {}'.format(CONFIG_FILEPATH))
 
     with open(prepare_filepath(CONFIG_FILEPATH)) as f:
-        data = json.load(f)
+        config = json.load(f)
 
-    # set paths relative to config file
+    is_valid, errors = validate.validate_config(config)
+
+    if not is_valid:
+        logger.error('Loaded config contained the following errors: {}'.format(errors))
+        return None
+
     prefix = os.path.dirname(CONFIG_FILEPATH)
 
-    data['customers_path'] = norm_path_and_join(prefix, data['customers_path'])
-    data['schedule_path'] = norm_path_and_join(prefix, data['schedule_path'])
+    # set paths relative to config file
+    config['customers_path'] = norm_path_and_join(prefix, config['customers_path'])
+    config['schedule_path'] = norm_path_and_join(prefix, config['schedule_path'])
 
-    for email_group in data['email_groups']:
+    for email_group in config['email_groups']:
         email_group['body_path'] = norm_path_and_join(prefix, email_group['body_path'])
 
     # set datetimes
-    data['start_send_time_map']['morning_and_noon'] = np.datetime64('{}T{}'.format(str(np.datetime64('today')),
-                                                                    data['start_send_time_map']['morning_and_noon']))
-    data['start_send_time_map']['afternoon'] = np.datetime64('{}T{}'.format(str(np.datetime64('today')),
-                                                             data['start_send_time_map']['afternoon']))
+    config['start_send_time_map']['morning_and_noon'] = \
+        np.datetime64('{}T{}'.format(str(np.datetime64('today')), config['start_send_time_map']['morning_and_noon']))
+    config['start_send_time_map']['afternoon'] = \
+        np.datetime64('{}T{}'.format(str(np.datetime64('today')), config['start_send_time_map']['afternoon']))
 
     # set scheduling config
-    data['batch_wait_time_sec'] = np.timedelta64(data['batch_wait_time_sec'], 's')
+    config['batch_wait_time_sec'] = np.timedelta64(config['batch_wait_time_sec'], 's')
 
-    return data
+    return config
 
 
 def explode_str(df, col, sep):

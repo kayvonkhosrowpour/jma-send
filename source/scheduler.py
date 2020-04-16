@@ -91,11 +91,12 @@ def schedule_subset_time(schedule_subset_df, start_datetime, batch_size, batch_w
 
             # get current batch
             start_idx = idx
-            end_idx = min(start_idx + batch_size, schedule_by_email_group.shape[0])
+            end_idx = min(start_idx + batch_size, schedule_by_email_group.shape[0] - 1)
+            size = end_idx - start_idx + 1
 
             # schedule current batch
-            logging.info('Setting {} [{}:{}] to {}'.format(email_group, start_idx, end_idx, current_datetime))
-            schedule_by_email_group.iloc[start_idx:end_idx].ScheduledTime = current_datetime
+            logging.info('Scheduling {} [{}:{}] to {}'.format(email_group, start_idx, end_idx, current_datetime))
+            schedule_by_email_group.loc[start_idx:end_idx, 'ScheduledTime'] = [current_datetime] * size
 
             # move to next batch and datetime
             idx += batch_size
@@ -169,21 +170,25 @@ if __name__ == '__main__':
     # load config
     config = common.read_config(logging)
 
+    if config is None:
+        logging.error('Config could not be loaded. Exiting {}...'.format(__file__))
+        sys.exit(1)
+
     # process schedule and customer files
     classes_today = get_classes_today(config, logging)
     customers = get_customers(config, logging)
 
     if classes_today is None or customers is None:
         logging.warning('Exiting scheduler: no emails will be scheduled today.')
-        sys.exit(1)
+        sys.exit(0)
 
     # get valid email groups
     email_groups = get_valid_email_groups(config, logging)
 
     if not email_groups:
         logging.error('No valid email groups were found!')
-        sys.exit(1)
+        sys.exit(0)
 
     # schedule the emails
     scheduled_df = compute_email_schedule(config, email_groups, classes_today, logging)
-    print(scheduled_df)
+    # print(scheduled_df)

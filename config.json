@@ -1,66 +1,30 @@
 {
-  "customers_path": "data/students_test_subset.csv",
-  "schedule_path": "data/schedule.xlsx",
+  "customers_path": "/Users/kayvon/code/jma/jma_sender/data/students_test_subset.csv",
+  "schedule_path": "/Users/kayvon/code/jma/jma_sender/data/schedule.xlsx",
   "start_send_time_map": {
     "morning_and_noon": "08:00",
     "afternoon": "12:00"
   },
-  "batch_wait_time_sec": 360,
+  "batch_wait_time_sec": 2,
   "batch_size": 3,
   "email_groups": [
     {
-      "schedule_name": "Lil Tigers",
-      "kicksite_recipients": ["Lil Tigers"],
-      "body_path": null,
-      "subject_title": null
-    },
-    {
       "schedule_name": "Kids",
       "kicksite_recipients": ["Kids TKD"],
-      "body_path": "templates/example.html",
-      "subject_title": "Kids TKD Today! | Journey Martial Arts"
+      "subject_title": "Kids TKD Today! | Journey Martial Arts",
+      "body_path": "/Users/kayvon/code/jma/jma_sender/templates/example.html"
     },
     {
       "schedule_name": "Teens/Adults",
       "kicksite_recipients": ["Teens TKD", "Adults TKD"],
-      "body_path": "templates/example.html",
-      "subject_title": "Teens and Adults TKD Today! | Journey Martial Arts"
+      "subject_title": "Teens and Adults TKD Today! | Journey Martial Arts",
+      "body_path": "/Users/kayvon/code/jma/jma_sender/templates/example.html"
     },
     {
-      "schedule_name": "LIVE High 5 Chat LT/Kids (Mat chat)",
-      "kicksite_recipients": ["Kids TKD", "Lil Tigers"],
-      "body_path": null,
-      "subject_title": null
-    },
-    {
-      "schedule_name": "LIVE Chat Teens/Adults (Mat Chat)",
-      "kicksite_recipients": ["Adults TKD", "Teens TKD"],
-      "body_path": null,
-      "subject_title": null
-    },
-    {
-      "schedule_name": "Ultimate Leadership Training",
-      "kicksite_recipients": ["Ultimate Leadership Training"],
-      "body_path": null,
-      "subject_title": null
-    },
-    {
-      "schedule_name": "Living Fit (Teens/Adults Fitness)",
-      "kicksite_recipients": ["Adults TKD", "Kids TKD", "Teens TKD", "Lil Tigers"],
-      "body_path": null,
-      "subject_title": null
-    },
-    {
-      "schedule_name": "If recipients are null or empty, will not process (1)",
-      "kicksite_recipients": null,
-      "body_path": null,
-      "subject_title": null
-    },
-    {
-      "schedule_name": "If recipients are null or empty, will not process (2)",
-      "kicksite_recipients": null,
-      "body_path": null,
-      "subject_title": null
+      "schedule_name": "XXX",
+      "kicksite_recipients": ["Teens TKD", "Adults TKD"],
+      "subject_title": "Teens and Adults TKD Today! | Journey Martial Arts",
+      "body_path": "/Users/kayvon/code/jma/jma_sender/templates/example.html"
     }
   ]
 }

@@ -1,0 +1,54 @@
+{
+  "customers_path": null,
+  "schedule_path": null,
+  "start_send_time_map": {
+    "morning_and_noon": "08:00",
+    "afternoon": "12:00"
+  },
+  "batch_wait_time_sec": 300,
+  "batch_size": 20,
+  "email_groups": [
+    {
+      "schedule_name": "Lil Tigers",
+      "kicksite_recipients": ["Lil Tigers"],
+      "subject_title": null,
+      "body_path": null
+    },
+    {
+      "schedule_name": "Kids",
+      "kicksite_recipients": ["Kids TKD"],
+      "subject_title": null
+      "body_path": null
+    },
+    {
+      "schedule_name": "Teens/Adults",
+      "kicksite_recipients": ["Teens TKD", "Adults TKD"],
+      "subject_title": null,
+      "body_path": null
+    },
+    {
+      "schedule_name": "LIVE High 5 Chat LT/Kids (Mat chat)",
+      "kicksite_recipients": ["Kids TKD", "Lil Tigers"],
+      "subject_title": null,
+      "body_path": null
+    },
+    {
+      "schedule_name": "LIVE Chat Teens/Adults (Mat Chat)",
+      "kicksite_recipients": ["Adults TKD", "Teens TKD"],
+      "subject_title": null,
+      "body_path": null
+    },
+    {
+      "schedule_name": "Ultimate Leadership Training",
+      "kicksite_recipients": ["Ultimate Leadership Training"],
+      "subject_title": null,
+      "body_path": null
+    },
+    {
+      "schedule_name": "Living Fit (Teens/Adults Fitness)",
+      "kicksite_recipients": ["Adults TKD", "Kids TKD", "Teens TKD", "Lil Tigers"],
+      "subject_title": null,
+      "body_path": null
+    }
+  ]
+}
