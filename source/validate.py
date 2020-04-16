@@ -30,9 +30,29 @@ def validate_schedule(field, value, error):
         error(field, 'Spreadsheet missing at least one of {} columns'.format(required_columns))
 
 
-def validate_email_groups():
-    # TODO: ensure that all email_groups' `schedule_name` is in the schedule
-    pass
+def validate_email_groups(config):
+    # make sure config contains valid schedule_name
+    schedule = common.read_frame(config['schedule_path'], index_col=0).index
+    schedule_names = [eg['schedule_name'] for eg in config['email_groups']]
+
+    no_such_program = [sn for sn in schedule_names if sn not in schedule]
+    if len(no_such_program) > 0:
+        raise ValueError('Config file has email groups defined that are not in the schedule: {}'
+                         .format(no_such_program))
+
+    # make sure config contains valid kicksite_recipients
+    customers = common.read_frame(config['customers_path'])
+    customers = customers[['Programs']]
+    programs = common.explode_str(customers, 'Programs', ',').Programs.unique()
+
+    recipients = set()
+    for eg in config['email_groups']:
+        recipients.update(eg['kicksite_recipients'])
+
+    no_such_recipient = [r for r in recipients if r not in programs]
+    if len(no_such_recipient) > 0:
+        raise ValueError('Customers spreadsheet does not contain Kicksite program(s): {}'
+                         .format(no_such_recipient))
 
 
 def validate_config(config):
@@ -92,5 +112,6 @@ def validate_config(config):
     result = v.validate(config)
 
     # TODO: validate email_groups here
+    validate_email_groups(config)
 
     return result, v.errors

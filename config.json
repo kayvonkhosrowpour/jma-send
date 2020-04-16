@@ -19,12 +19,6 @@
       "kicksite_recipients": ["Teens TKD", "Adults TKD"],
       "subject_title": "Teens and Adults TKD Today! | Journey Martial Arts",
       "body_path": "/Users/kayvon/code/jma/jma_sender/templates/example.html"
-    },
-    {
-      "schedule_name": "XXX",
-      "kicksite_recipients": ["Teens TKD", "Adults TKD"],
-      "subject_title": "Teens and Adults TKD Today! | Journey Martial Arts",
-      "body_path": "/Users/kayvon/code/jma/jma_sender/templates/example.html"
     }
   ]
 }
