@@ -1,4 +1,5 @@
 import os
+import re
 from cerberus import Validator
 import common
 
@@ -6,11 +7,21 @@ import common
 def validate_filepath(field, value, error):
     if value is not None:
         if not os.path.exists(value):
-            error(field, 'path not found - please enter the absolute path')
+            error(field, '{} path not found - please use a valid, absolute path'.format(value))
+            return False
+
+    return True
+
+
+def validate_24hr_time(field, value, error):
+    if not re.match(r'^([01][0-9]|2[0-3]):[0-5][0-9]$', value):
+        error(field, '{} does not match 24-HR time format (examples: 08:00, 14:30)'.format(value))
 
 
 def validate_customers(field, value, error):
-    validate_filepath(field, value, error)
+    if not validate_filepath(field, value, error):
+        return
+
     customers = common.read_frame(value)
 
     if not customers.shape[0] > 0:
@@ -18,27 +29,37 @@ def validate_customers(field, value, error):
 
     required_columns = set(['Emails', 'Programs', 'Subscribed'])
     if len(required_columns.intersection(set(customers.columns))) != len(required_columns):
-        error(field, 'Spreadsheet meeting at least one of {} columns'.format(required_columns))
+        error(field, 'Customers spreadsheet missing at least one of {} columns'
+                     .format(required_columns))
 
 
 def validate_schedule(field, value, error):
-    validate_filepath(field, value, error)
+    if not validate_filepath(field, value, error):
+        return
+
     schedule = common.read_frame(value, index_col=0)
 
     required_columns = set(['M', 'T', 'W', 'Th', 'F', 'Sa'])
     if len(required_columns.intersection(set(schedule.columns))) != len(required_columns):
-        error(field, 'Spreadsheet missing at least one of {} columns'.format(required_columns))
+        error(field, 'Customers spreadsheet missing at least one of {} columns'
+                     .format(required_columns))
 
 
 def validate_email_groups(config):
+    errors = []
+
+    # make sure we have at least one email group
+    if len(config['email_groups']) == 0:
+        errors.append('Config email_groups contains no elements.')
+
     # make sure config contains valid schedule_name
     schedule = common.read_frame(config['schedule_path'], index_col=0).index
     schedule_names = [eg['schedule_name'] for eg in config['email_groups']]
 
     no_such_program = [sn for sn in schedule_names if sn not in schedule]
     if len(no_such_program) > 0:
-        raise ValueError('Config file has email groups defined that are not in the schedule: {}'
-                         .format(no_such_program))
+        errors.append('Config file has email groups defined that are not in the schedule: {}'\
+                      .format(no_such_program))
 
     # make sure config contains valid kicksite_recipients
     customers = common.read_frame(config['customers_path'])
@@ -51,8 +72,10 @@ def validate_email_groups(config):
 
     no_such_recipient = [r for r in recipients if r not in programs]
     if len(no_such_recipient) > 0:
-        raise ValueError('Customers spreadsheet does not contain Kicksite program(s): {}'
-                         .format(no_such_recipient))
+        errors.append('Customers spreadsheet does not contain Kicksite program(s): {}'\
+                      .format(no_such_recipient))
+
+    return errors
 
 
 def validate_config(config):
@@ -71,7 +94,7 @@ def validate_config(config):
     }
     valid_24hr_time = {
         'type': 'string',
-        'regex': r'([01][0-9]|2[0-3]):[0-5][0-9]'
+        'check_with': validate_24hr_time
     }
     valid_string = {'type': 'string'}
     valid_integer = {'type': 'integer'}
@@ -109,9 +132,13 @@ def validate_config(config):
     }
 
     v = Validator(config_schema)
-    result = v.validate(config)
 
-    # TODO: validate email_groups here
-    validate_email_groups(config)
+    is_valid_schema = v.validate(config)
+    errors = v.errors
 
-    return result, v.errors
+    if is_valid_schema:
+        email_group_validation = validate_email_groups(config)
+        if len(email_group_validation) > 0:
+            errors['email_group_validation'] = email_group_validation
+
+    return len(errors) == 0, errors
