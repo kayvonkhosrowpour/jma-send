@@ -23,7 +23,7 @@ def validate_customers(field, value, error):
     if not validate_filepath(field, value, error):
         return
 
-    customers = common.read_frame(value)
+    customers = common.read_df(value)
 
     if not customers.shape[0] > 0:
         error(field, 'no customers')
@@ -39,7 +39,7 @@ def validate_schedule(field, value, error):
     if not validate_filepath(field, value, error):
         return
 
-    schedule = common.read_frame(value, index_col=0).columns.tolist()
+    schedule = common.read_df(value, index_col=0).columns.tolist()
 
     unequal_len = len(common.DAYS) != len(schedule)
     if unequal_len or len([x for x, y in zip(common.DAYS, schedule) if x != y]) > 0:
@@ -72,7 +72,7 @@ def validate_email_groups_with_schedule_and_customers(config):
         errors.append('Config email_groups contains no elements.')
 
     # make sure config contains valid schedule_name
-    schedule = common.read_frame(config['schedule_path'], index_col=0).index
+    schedule = common.read_df(config['schedule_path'], index_col=0).index
     schedule_names = [eg['schedule_name'] for eg in config['email_groups']]
 
     no_such_program = [sn for sn in schedule_names if sn not in schedule]
@@ -81,7 +81,7 @@ def validate_email_groups_with_schedule_and_customers(config):
                       .format(no_such_program))
 
     # make sure config contains valid kicksite_recipients
-    customers = common.read_frame(config['customers_path'])
+    customers = common.read_df(config['customers_path'])
     customers = customers[['Programs']]
     programs = common.explode_str(customers, 'Programs', ',').Programs.unique()
 

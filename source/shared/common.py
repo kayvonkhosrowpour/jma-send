@@ -12,6 +12,8 @@ from . import validate
 
 
 DAYS = ['M', 'T', 'W', 'Th', 'F', 'Sa']
+LOG_FILENAME = 'jma_sender.log'
+SCHEDULED_EMAILS_FILENAME = 'scheduled.csv'
 
 
 def handle_argparse():
@@ -28,7 +30,7 @@ def setup_logging(calling_filename, log_dirpath, level=logging.DEBUG):
     root_logger.setLevel(level)
 
     file_handler = logging.FileHandler(os.path.normpath(os.path.join(log_dirpath,
-                                                                     'jma_send.log')))
+                                                                     LOG_FILENAME)))
     file_handler.setFormatter(log_formatter)
     root_logger.addHandler(file_handler)
 
@@ -91,7 +93,16 @@ def transform_config(config):
     config['batch_wait_time_sec'] = np.timedelta64(config['batch_wait_time_sec'], 's')
 
 
-def read_frame(filepath, index_col=None):
+def get_schedule_path_from_cache():
+
+    root_dir = __file__
+    for i in range(0, 3):
+        root_dir = os.path.dirname(root_dir)
+
+    return os.path.join(root_dir, 'cache', SCHEDULED_EMAILS_FILENAME)
+
+
+def read_df(filepath, index_col=None):
     df = None
 
     if filepath.endswith('.csv'):
@@ -100,6 +111,23 @@ def read_frame(filepath, index_col=None):
         df = pd.read_excel(filepath, index_col=index_col)
 
     return df
+
+
+def save_df(df, filepath, logger, index=False, ext='csv'):
+    filepath = os.path.normpath(filepath)
+
+    if os.path.exists(filepath) and os.path.isfile(filepath):
+        os.remove(filepath)
+
+    logger.info('Saving dataframe fo shape {} to {}'.format(df.shape, filepath))
+
+    if ext == 'csv':
+        df.to_csv(filepath, index=index)
+    elif ext == 'xlsx':
+        with pd.ExcelWriter(filepath) as writer:
+            df.to_excel(writer, sheet_name='Schedule')
+    else:
+        raise ValueError('Unimplemented extension {}'.format(ext))
 
 
 def explode_str(df, col, sep):
