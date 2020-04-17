@@ -1,14 +1,14 @@
 import pandas as pd
 import numpy as np
-import os
 import sys
 import traceback
-import common
+from shared import common
 
 
 def get_classes_today(config, logger):
     schedule = common.read_frame(config['schedule_path'], index_col=0)
-    today = common.get_todays_weekday()
+    lookup = {i: weekday for i, weekday in enumerate(common.DAYS)}
+    today = lookup[pd.Timestamp.today().weekday()]
 
     classes_today = None
 
@@ -36,90 +36,58 @@ def get_customers(config, logger):
                                       'Programs': 'Program'}, axis=1)
         customers = customers[['Email', 'Program']]
     except Exception:
-        logger.error('Could not process customers with exception: {}'.format(traceback.format_exc()))
+        logger.error('Could not process customers with exception: {}'
+                     .format(traceback.format_exc()))
 
     return customers
 
 
-def get_valid_email_groups(config, logger):
-
-    email_groups = []
-
-    for email_group in config['email_groups']:
-
-        # get fields
-        sch_name = email_group['schedule_name']
-        recipients = email_group['kicksite_recipients']
-        body_path = email_group['body_path']
-        subject_title = email_group['subject_title']
-
-        # validate fields
-        valid_schedule_name = sch_name is not None and len(sch_name) > 0
-        valid_recipients = recipients is not None and len(recipients) > 0
-
-        valid_html_body = body_path is not None
-        valid_html_body = valid_html_body and len(body_path) > 0
-        valid_html_body = valid_html_body and os.path.exists(os.path.normpath(body_path))
-
-        valid_sub = subject_title is not None and len(subject_title) > 0
-
-        valid_html = False
-        if valid_html_body:
-            valid_html, errors = common.is_valid_html(body_path)
-            if not valid_html:
-                logger.error('Invalid HTML at {} with errors: {}'
-                             .format(body_path, errors))
-
-        if valid_schedule_name and valid_recipients and valid_html_body and valid_html and valid_sub:
-            email_groups.append(email_group)
-
-    return email_groups
-
-
-def schedule_subset_time(schedule_subset_df, start_datetime, batch_size, batch_wait_time_sec):
-    scheduled_df = pd.DataFrame()
-
+def schedule_subset_time(subset_df, start_datetime, batch_size, wait_time):
+    schedule_df = pd.DataFrame()
     current_datetime = start_datetime
 
-    for email_group in schedule_subset_df.EmailGroup.unique():
+    # process each email group
+    for email_group in subset_df.EmailGroup.unique():
 
-        schedule_by_email_group = schedule_subset_df[schedule_subset_df.EmailGroup == email_group].copy()
+        schedule_by_email_group = subset_df[subset_df.EmailGroup == email_group].copy()
 
         idx = 0
 
+        # process each batch within an email group
         while idx < schedule_by_email_group.shape[0]:
 
             # get current batch
-            start_idx = idx
-            end_idx = min(start_idx + batch_size, schedule_by_email_group.shape[0] - 1)
-            size = end_idx - start_idx + 1
+            start = idx
+            end = min(start + batch_size, schedule_by_email_group.shape[0] - 1)
+            size = end - start + 1
 
             # schedule current batch
-            logging.info('Scheduling {} [{}:{}] to {}'.format(email_group, start_idx, end_idx, current_datetime))
-            schedule_by_email_group.loc[start_idx:end_idx, 'ScheduledTime'] = [current_datetime] * size
+            logging.info('Scheduling {} [{}:{}] to {}'
+                         .format(email_group, start, end, current_datetime))
+            schedule_by_email_group.loc[start:end, 'ScheduledTime'] = [current_datetime] * size
 
             # move to next batch and datetime
             idx += batch_size
-            current_datetime += batch_wait_time_sec
+            current_datetime += wait_time
 
-        scheduled_df = pd.concat((scheduled_df, schedule_by_email_group))
+        schedule_df = pd.concat((schedule_df, schedule_by_email_group))
 
-    return scheduled_df
+    return schedule_df
 
 
-def compute_email_schedule(config, email_groups, classes_today, logger):
+def compute_email_schedule(config, classes_today, logger):
     # create df and define types
-    scheduled_df = pd.DataFrame(columns=['Recipient', 'EmailGroup', 'SubjectTitle',
+    schedule_df = pd.DataFrame(columns=['Recipient', 'EmailGroup', 'SubjectTitle',
                                          'BodyPath', 'ScheduledTime', 'DatetimeSent'])
-    scheduled_df.Recipient = scheduled_df.Recipient.astype(str)
-    scheduled_df.EmailGroup = scheduled_df.EmailGroup.astype(str)
-    scheduled_df.SubjectTitle = scheduled_df.SubjectTitle.astype(str)
-    scheduled_df.BodyPath = scheduled_df.BodyPath.astype(str)
-    scheduled_df.ScheduledTime = scheduled_df.ScheduledTime.astype(np.datetime64)
-    scheduled_df.DatetimeSent = scheduled_df.DatetimeSent.astype(np.datetime64)
+    schedule_df.Recipient = schedule_df.Recipient.astype(str)
+    schedule_df.EmailGroup = schedule_df.EmailGroup.astype(str)
+    schedule_df.SubjectTitle = schedule_df.SubjectTitle.astype(str)
+    schedule_df.BodyPath = schedule_df.BodyPath.astype(str)
+    schedule_df.ScheduledTime = schedule_df.ScheduledTime.astype(np.datetime64)
+    schedule_df.DatetimeSent = schedule_df.DatetimeSent.astype(np.datetime64)
 
     # create df for each recipient in an email group
-    for email_group in email_groups:
+    for email_group in config['email_groups']:
 
         # get all recipients for this email group (CASE-SENSITIVE)
         lower_recipients = [recip.lower() for recip in email_group['kicksite_recipients']]
@@ -131,47 +99,49 @@ def compute_email_schedule(config, email_groups, classes_today, logger):
                                    'SubjectTitle': [email_group['subject_title']] * recipients.shape[0],
                                    'BodyPath': [email_group['body_path']] * recipients.shape[0]})
 
-        scheduled_df = pd.concat((scheduled_df, eg_df))
+        schedule_df = pd.concat((schedule_df, eg_df))
 
-    scheduled_df.reset_index(inplace=True, drop=True)
+    schedule_df.reset_index(inplace=True, drop=True)
 
-    logger.info('Prepared to send {} emails out today'.format(scheduled_df.shape[0]))
+    logger.info('Prepared to send {} emails out today'.format(schedule_df.shape[0]))
 
     # split into morning_and_noon and afternoon by class time
     today_at_noon = np.datetime64(str(np.datetime64('today')) + 'T12:00')
-
     morning_and_noon_classes = classes_today[classes_today <= today_at_noon].index.tolist()
     afternoon_classes = classes_today[classes_today > today_at_noon].index.tolist()
 
-    morning_and_noon_scheduled_df = scheduled_df[scheduled_df.EmailGroup.isin(morning_and_noon_classes)]
-    afternoon_scheduled_df = scheduled_df[scheduled_df.EmailGroup.isin(afternoon_classes)]
+    morning_and_noon_scheduled_df = schedule_df[schedule_df.EmailGroup.isin(morning_and_noon_classes)]
+    afternoon_scheduled_df = schedule_df[schedule_df.EmailGroup.isin(afternoon_classes)]
 
     # get scheduling configuration
     batch_size = config['batch_size']
     batch_wait_time_sec = config['batch_wait_time_sec']
 
     # schedule the emails
-    scheduled_df = pd.concat((schedule_subset_time(morning_and_noon_scheduled_df,
-                                                   config['start_send_time_map']['morning_and_noon'],
-                                                   batch_size,
-                                                   batch_wait_time_sec),
-                              schedule_subset_time(afternoon_scheduled_df,
-                                                   config['start_send_time_map']['afternoon'],
-                                                   batch_size,
-                                                   batch_wait_time_sec)))
+    schedule_df = pd.concat((schedule_subset_time(morning_and_noon_scheduled_df,
+                                                  config['start_send_time_map']['morning_and_noon'],
+                                                  batch_size,
+                                                  batch_wait_time_sec),
+                             schedule_subset_time(afternoon_scheduled_df,
+                                                  config['start_send_time_map']['afternoon'],
+                                                  batch_size,
+                                                  batch_wait_time_sec)))
 
-    return scheduled_df
+    return schedule_df
 
 
 if __name__ == '__main__':
+    # get command line args
+    args = common.handle_argparse()
+
     # configure logging
-    logging = common.setup_logging(__file__)
+    logging = common.setup_logging(__file__, args.logs_dirpath)
 
     # load config
-    config = common.read_config(logging)
+    config = common.read_config(args.config_filepath, logging)
 
     if config is None:
-        logging.error('Config could not be loaded. Exiting {}...'.format(__file__))
+        logging.error('Invalid or missing config. Exiting {}...'.format(__file__))
         sys.exit(1)
 
     # process schedule and customer files
@@ -182,13 +152,5 @@ if __name__ == '__main__':
         logging.warning('Exiting scheduler: no emails will be scheduled today.')
         sys.exit(0)
 
-    # get valid email groups
-    email_groups = get_valid_email_groups(config, logging)
-
-    if not email_groups:
-        logging.error('No valid email groups were found!')
-        sys.exit(0)
-
     # schedule the emails
-    scheduled_df = compute_email_schedule(config, email_groups, classes_today, logging)
-    # print(scheduled_df)
+    scheduled_df = compute_email_schedule(config, classes_today, logging)

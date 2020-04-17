@@ -1,7 +1,8 @@
 import os
 import re
+from bs4 import BeautifulSoup
 from cerberus import Validator
-import common
+from . import common
 
 
 def validate_filepath(field, value, error):
@@ -40,12 +41,30 @@ def validate_schedule(field, value, error):
 
     schedule = common.read_frame(value, index_col=0).columns.tolist()
 
-    days = ['M', 'T', 'W', 'Th', 'F', 'Sa']
-    if len(days) != len(schedule) or len([x for x, y in zip(days, schedule) if x != y]) > 0:
-        error(field, 'Customers spreadsheet columns {} do not match {}'.format(schedule, days))
+    unequal_len = len(common.DAYS) != len(schedule)
+    if unequal_len or len([x for x, y in zip(common.DAYS, schedule) if x != y]) > 0:
+        error(field, 'Schedule spreadsheet columns {} do not match {}'
+                     .format(schedule, common.DAYS))
 
 
-def validate_email_groups(config):
+def validate_path_and_html(field, value, error):
+    if not validate_filepath(field, value, error):
+        return
+
+    if not value.endswith('.html'):
+        error(field, 'does not have .html extension')
+        return
+
+    with open(os.path.normpath(value), 'r') as f:
+        lines = [line.rstrip() for line in f]
+
+    if not bool(BeautifulSoup(''.join(lines), "html.parser").find()):
+        error(field, 'is invalid HTML. '
+              'use https://www.freeformatter.com/html-validator.html '
+              'to validate your html')
+
+
+def validate_email_groups_with_schedule_and_customers(config):
     errors = []
 
     # make sure we have at least one email group
@@ -58,7 +77,7 @@ def validate_email_groups(config):
 
     no_such_program = [sn for sn in schedule_names if sn not in schedule]
     if len(no_such_program) > 0:
-        errors.append('Config file has email groups defined that are not in the schedule: {}'\
+        errors.append('Config file has email groups defined that are not in the schedule: {}'
                       .format(no_such_program))
 
     # make sure config contains valid kicksite_recipients
@@ -79,10 +98,9 @@ def validate_email_groups(config):
 
 
 def validate_config(config):
-
-    valid_filepath = {
+    valid_html_filepath = {
         'type': 'string',
-        'check_with': validate_filepath
+        'check_with': validate_path_and_html
     }
     valid_customers = {
         'type': 'string',
@@ -125,7 +143,7 @@ def validate_config(config):
                     "schedule_name": valid_string,
                     "kicksite_recipients": valid_string_list,
                     "subject_title": valid_string,
-                    "body_path": valid_filepath
+                    "body_path": valid_html_filepath
                 }
             }
         }
@@ -137,8 +155,8 @@ def validate_config(config):
     errors = v.errors
 
     if is_valid_schema:
-        email_group_validation = validate_email_groups(config)
-        if len(email_group_validation) > 0:
-            errors['email_group_validation'] = email_group_validation
+        email_groups_validation = validate_email_groups_with_schedule_and_customers(config)
+        if len(email_groups_validation) > 0:
+            errors['email_groups_validation'] = email_groups_validation
 
     return len(errors) == 0, errors
