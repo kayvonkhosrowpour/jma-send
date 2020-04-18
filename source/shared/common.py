@@ -54,8 +54,13 @@ def prepare_filepath(filepath, _raise=True):
 
 def read_config(config_filepath, logger):
     logger.info('Loading config file from {}'.format(config_filepath))
+    config_prepared_filepath = prepare_filepath(config_filepath)
 
-    with open(prepare_filepath(config_filepath)) as f:
+    if not config_prepared_filepath.endswith('.json'):
+        logger.error('{} does not have a .json extension.'.format(config_prepared_filepath))
+        return None
+
+    with open(config_prepared_filepath) as f:
         try:
             config = json.load(f)
         except json.decoder.JSONDecodeError as e:
