@@ -58,13 +58,15 @@ def schedule_subset_time(subset_df, start_datetime, batch_size, wait_time):
 
             # get current batch
             start = idx
-            end = min(start + batch_size, schedule_by_email_group.shape[0] - 1)
-            size = end - start + 1
+            end = min(start + batch_size, schedule_by_email_group.shape[0])
+            size = end - start
 
             # schedule current batch
             logging.info('Scheduling {} [{}:{}] to {}'
                          .format(email_group, start, end, current_datetime))
-            schedule_by_email_group.loc[start:end, 'ScheduledTime'] = [current_datetime] * size
+
+            my_idx = schedule_by_email_group.iloc[start:end].index
+            schedule_by_email_group.loc[my_idx, 'ScheduledTime'] = [current_datetime] * size
 
             # move to next batch and datetime
             idx += batch_size
