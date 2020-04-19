@@ -115,7 +115,10 @@ def validate_config(config):
         'check_with': validate_24hr_time
     }
     valid_string = {'type': 'string'}
-    valid_integer = {'type': 'integer'}
+    valid_non_negative_integer = {
+        'type': 'integer',
+        'min': 0
+    }
     valid_nonzero_integer = {
         'type': 'integer',
         'min': 1
@@ -137,7 +140,7 @@ def validate_config(config):
                "afternoon": valid_24hr_time
            }
         },
-        "batch_wait_time_sec": valid_integer,
+        "batch_wait_time_sec": valid_non_negative_integer,
         "batch_size": valid_nonzero_integer,
         "email_groups": {
             'type': 'list',

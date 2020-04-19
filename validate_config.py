@@ -6,10 +6,13 @@ from source.shared import common
 
 
 class Window(QWidget):
-    def __init__(self, config, *args, **kwargs):
+    def __init__(self, is_valid, errors, *args, **kwargs):
         QWidget.__init__(self, *args, **kwargs)
 
-        label_str = 'Config is {}. See /logs for more info.'.format('valid' if config else 'INVALID')
+        label_str = 'Config is {}.\n'.format('valid. See /logs for more info' if is_valid else 'INVALID')
+        if not is_valid:
+            label_str += '\n'.join(errors)
+
         self.label = QLabel(label_str, self)
         self.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.label.setAlignment(Qt.AlignCenter)
@@ -31,8 +34,9 @@ if __name__ == '__main__':
     logging = common.setup_logging(__file__, './logs')
 
     # load config
-    config = common.read_config('config.json', logging)
+    errors = []
+    config = common.read_config('config.json', logging, errors)
 
     app = QApplication(sys.argv)
-    win = Window(config)
+    win = Window(config is not None, errors)
     sys.exit(app.exec_())

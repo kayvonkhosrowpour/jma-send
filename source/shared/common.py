@@ -52,25 +52,31 @@ def prepare_filepath(filepath, _raise=True):
     return filepath
 
 
-def read_config(config_filepath, logger):
+def log_and_add_error(msg, errors, logger):
+    if errors is not None:
+        errors.append(msg)
+    logger.error(msg)
+
+
+def read_config(config_filepath, logger, error_list=None):
     logger.info('Loading configuration {}'.format(config_filepath))
     config_prepared_filepath = prepare_filepath(config_filepath)
 
     if not config_prepared_filepath.endswith('.json'):
-        logger.error('{} does not have a .json extension.'.format(config_prepared_filepath))
+        log_and_add_error('{} does not have a .json extension.'.format(config_prepared_filepath), error_list, logger)
         return None
 
     with open(config_prepared_filepath) as f:
         try:
             config = json.load(f)
         except json.decoder.JSONDecodeError as e:
-            logger.error('Error in "{}" decoding: "{}"'.format(config_filepath, e))
+            log_and_add_error('Error in "{}" decoding: "{}"'.format(config_filepath, e), error_list, logger)
             return None
 
     is_valid, errors = validate.validate_config(config)
 
     if not is_valid:
-        logger.error('Loaded config contained the following errors: {}'.format(errors))
+        log_and_add_error('Loaded config contained the following errors: {}'.format(errors), error_list, logger)
         return None
 
     transform_config(config)
