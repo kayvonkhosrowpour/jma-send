@@ -22,5 +22,4 @@ __pycache__/
 .idea/
 
 # cache
-./cache/**
-./cache/*.json
+cache/cached_config.json
