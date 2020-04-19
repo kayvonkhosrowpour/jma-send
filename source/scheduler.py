@@ -8,7 +8,13 @@ from shared import common
 def get_classes_today(config, logger):
     schedule = common.read_df(config['schedule_path'], index_col=0)
     lookup = {i: weekday for i, weekday in enumerate(common.DAYS)}
-    today = lookup[pd.Timestamp.today().weekday()]
+    today = pd.Timestamp.today().weekday()
+    # today = 5  # DEBUG: HARDCODE SATURDAY
+    if today == 6:
+        logger.info('No classes on Sunday')
+        return None
+
+    today = lookup[today]
 
     classes_today = None
 
@@ -154,7 +160,6 @@ if __name__ == '__main__':
     if config is None:
         logging.error('Invalid or missing config. Exiting {}...'.format(__file__))
         sys.exit(1)
-
 
     # process schedule and customer files
     classes_today = get_classes_today(config, logging)
