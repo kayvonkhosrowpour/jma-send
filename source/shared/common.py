@@ -6,6 +6,7 @@ import smtplib
 import logging
 import sys
 import argparse
+import shutil
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from . import validate
@@ -14,6 +15,7 @@ from . import validate
 DAYS = ['M', 'T', 'W', 'Th', 'F', 'Sa']
 LOG_FILENAME = 'jma_sender.log'
 SCHEDULED_EMAILS_FILENAME = 'scheduled.csv'
+CACHED_CONFIG_FILENAME = 'cached_config.json'
 
 
 def handle_argparse():
@@ -48,6 +50,16 @@ def prepare_filepath(filepath, _raise=True):
 
     if not os.path.exists(filepath) and _raise:
         raise FileNotFoundError('No file found at {}.'.format(filepath))
+
+    return filepath
+
+
+def prepare_dirpath(filepath, _raise=True):
+    filepath = os.path.normpath(filepath)
+    dirpath = os.path.dirname(filepath)
+
+    if not os.path.exists(dirpath) and _raise:
+        raise NotADirectoryError('No directory found at {}.'.format(dirpath))
 
     return filepath
 
@@ -104,13 +116,20 @@ def transform_config(config):
     config['batch_wait_time_sec'] = np.timedelta64(config['batch_wait_time_sec'], 's')
 
 
-def get_schedule_path_from_cache():
-
+def get_cache_path():
     root_dir = __file__
     for i in range(0, 3):
         root_dir = os.path.dirname(root_dir)
 
-    return os.path.join(root_dir, 'cache', SCHEDULED_EMAILS_FILENAME)
+    return root_dir
+
+
+def get_cache_schedule_path():
+    return os.path.join(get_cache_path(), 'cache', SCHEDULED_EMAILS_FILENAME)
+
+
+def get_cache_config_path():
+    return os.path.join(get_cache_path(), 'cache', CACHED_CONFIG_FILENAME)
 
 
 def read_df(filepath, index_col=None):
@@ -139,6 +158,13 @@ def save_df(df, filepath, logger, index=False, ext='csv'):
             df.to_excel(writer, sheet_name='Schedule')
     else:
         raise ValueError('Unimplemented extension {}'.format(ext))
+
+
+def copyfile(src, dst, logger):
+    src_prepared = prepare_filepath(src)
+    dst_prepared = prepare_dirpath(dst)
+    logger.info('Copying {} to {}'.format(src_prepared, dst_prepared))
+    shutil.copyfile(src_prepared, dst_prepared)
 
 
 def explode_str(df, col, sep):

@@ -20,3 +20,7 @@ __pycache__/
 # pycharm
 .idea/*
 .idea/
+
+# cache
+./cache/**
+./cache/*.json

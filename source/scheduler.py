@@ -155,6 +155,7 @@ if __name__ == '__main__':
         logging.error('Invalid or missing config. Exiting {}...'.format(__file__))
         sys.exit(1)
 
+
     # process schedule and customer files
     classes_today = get_classes_today(config, logging)
     customers = get_customers(config, logging)
@@ -167,7 +168,7 @@ if __name__ == '__main__':
     scheduled_df = compute_email_schedule(config, classes_today, logging)
 
     # save to cache
-    cache_filepath = common.get_schedule_path_from_cache()
-    common.save_df(scheduled_df, cache_filepath, logging)
+    common.save_df(scheduled_df, common.get_cache_schedule_path(), logging)
+    common.copyfile(args.config_filepath, common.get_cache_config_path(), logging)
 
     logging.info('Emails successfully saved and scheduled')
