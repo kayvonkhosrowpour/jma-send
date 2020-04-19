@@ -53,7 +53,7 @@ def prepare_filepath(filepath, _raise=True):
 
 
 def read_config(config_filepath, logger):
-    logger.info('Loading config file from {}'.format(config_filepath))
+    logger.info('Loading configuration {}'.format(config_filepath))
     config_prepared_filepath = prepare_filepath(config_filepath)
 
     if not config_prepared_filepath.endswith('.json'):
@@ -124,7 +124,7 @@ def save_df(df, filepath, logger, index=False, ext='csv'):
     if os.path.exists(filepath) and os.path.isfile(filepath):
         os.remove(filepath)
 
-    logger.info('Saving dataframe fo shape {} to {}'.format(df.shape, filepath))
+    logger.info('Saving dataframe of shape {} to {}'.format(df.shape, filepath))
 
     if ext == 'csv':
         df.to_csv(filepath, index=index)

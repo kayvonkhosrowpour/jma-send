@@ -35,6 +35,8 @@ def get_customers(config, logger):
         customers = customers.rename({'Emails': 'Email',
                                       'Programs': 'Program'}, axis=1)
         customers = customers[['Email', 'Program']]
+        customers.Email = customers.Email.str.lower()
+        customers.drop_duplicates(subset=['Email', 'Program'], inplace=True)
     except Exception:
         logger.error('Could not process customers with exception: {}'
                      .format(traceback.format_exc()))
@@ -42,7 +44,7 @@ def get_customers(config, logger):
     return customers
 
 
-def schedule_subset_time(subset_df, start_datetime, batch_size, wait_time):
+def schedule_subset_time(subset_df, start_datetime, batch_size, wait_time, logger):
     scheduled_emails_df = pd.DataFrame()
     current_datetime = start_datetime
 
@@ -50,6 +52,9 @@ def schedule_subset_time(subset_df, start_datetime, batch_size, wait_time):
     for email_group in subset_df.EmailGroup.unique():
 
         schedule_by_email_group = subset_df[subset_df.EmailGroup == email_group].copy()
+
+        logger.info("email_group '{}' has {} recipients".format(email_group,
+                                                                schedule_by_email_group.shape[0]))
 
         idx = 0
 
@@ -62,8 +67,8 @@ def schedule_subset_time(subset_df, start_datetime, batch_size, wait_time):
             size = end - start
 
             # schedule current batch
-            logging.info('Scheduling {} [{}:{}] to {}'
-                         .format(email_group, start, end, current_datetime))
+            logging.info('Scheduling {} [{}:{}/{}] to {}'
+                         .format(email_group, start, end, schedule_by_email_group.shape[0], current_datetime))
 
             my_idx = schedule_by_email_group.iloc[start:end].index
             schedule_by_email_group.loc[my_idx, 'ScheduledTime'] = [current_datetime] * size
@@ -78,11 +83,11 @@ def schedule_subset_time(subset_df, start_datetime, batch_size, wait_time):
 
 
 def compute_email_schedule(config, classes_today, logger):
-    logger.info('Computing email schedule...')
+    logger.info('Computing email schedule')
 
     # create df and define types
     schedule_df = pd.DataFrame(columns=['Recipient', 'EmailGroup', 'SubjectTitle',
-                                         'BodyPath', 'ScheduledTime', 'DatetimeSent'])
+                                        'BodyPath', 'ScheduledTime', 'DatetimeSent'])
     schedule_df.Recipient = schedule_df.Recipient.astype(str)
     schedule_df.EmailGroup = schedule_df.EmailGroup.astype(str)
     schedule_df.SubjectTitle = schedule_df.SubjectTitle.astype(str)
@@ -92,9 +97,6 @@ def compute_email_schedule(config, classes_today, logger):
 
     # create df for each recipient in an email group
     for email_group in config['email_groups']:
-
-        logging.info('Looking at email_group with schedule_name {}'
-                     .format(email_group['schedule_name']))
 
         # get all recipients for this email group (CASE-SENSITIVE)
         lower_recipients = [recip.lower() for recip in email_group['kicksite_recipients']]
@@ -126,13 +128,15 @@ def compute_email_schedule(config, classes_today, logger):
     schedule_df = pd.concat((schedule_subset_time(morning_and_noon_scheduled_df,
                                                   config['start_send_time_map']['morning_and_noon'],
                                                   batch_size,
-                                                  batch_wait_time_sec),
+                                                  batch_wait_time_sec,
+                                                  logger),
                              schedule_subset_time(afternoon_scheduled_df,
                                                   config['start_send_time_map']['afternoon'],
                                                   batch_size,
-                                                  batch_wait_time_sec)))
+                                                  batch_wait_time_sec,
+                                                  logger)))
 
-    logger.info('Officially scheduled {} emails!'.format(schedule_df.shape[0]))
+    logger.info('Scheduled {} emails'.format(schedule_df.shape[0]))
 
     return schedule_df
 
@@ -166,4 +170,4 @@ if __name__ == '__main__':
     cache_filepath = common.get_schedule_path_from_cache()
     common.save_df(scheduled_df, cache_filepath, logging)
 
-    logging.info('Successfully saved emails to be sent to the cache!')
+    logging.info('Emails successfully saved and scheduled')

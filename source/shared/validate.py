@@ -116,6 +116,10 @@ def validate_config(config):
     }
     valid_string = {'type': 'string'}
     valid_integer = {'type': 'integer'}
+    valid_nonzero_integer = {
+        'type': 'integer',
+        'min': 1
+    }
     valid_string_list = {
         'type': 'list',
         'schema': {
@@ -134,7 +138,7 @@ def validate_config(config):
            }
         },
         "batch_wait_time_sec": valid_integer,
-        "batch_size": valid_integer,
+        "batch_size": valid_nonzero_integer,
         "email_groups": {
             'type': 'list',
             "schema": {
