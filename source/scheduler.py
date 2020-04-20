@@ -1,20 +1,74 @@
 import pandas as pd
 import numpy as np
-import sys
 import traceback
 import pytz
-from shared import common
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.executors.pool import ProcessPoolExecutor
 from apscheduler.jobstores.mongodb import MongoDBJobStore
+from pid.decorator import pidfile
+from shared import common
+
+
+def setup_scheduler(scheduler_type, job_type):
+    scheduler = scheduler_type()
+    scheduler.add_jobstore(alias='mongodb-{}'.format(job_type),
+                           jobstore=MongoDBJobStore(database='EmailSchedule', collection=job_type))
+
+    scheduler.add_executor(ProcessPoolExecutor(max_workers=20))
+    scheduler.timezone = pytz.timezone('Etc/GMT+5')
+
+    return scheduler
+
+
+def schedule_email_jobs(logs_dirpath, config_filepath):
+    # configure logging
+    logging = common.setup_logging(__file__,logs_dirpath)
+
+    # load config
+    config = common.read_config(config_filepath, logging)
+
+    if config is None:
+        logging.error('Invalid or missing config. Exiting {}...'.format(__file__))
+        return
+
+    # process schedule and customer files
+    classes_today = get_classes_today(config, logging)
+    customers = get_customers(config, logging)
+
+    if classes_today is None or customers is None:
+        logging.warning('Exiting scheduler: no emails will be scheduled today.')
+        return
+
+    # get df with email schedule
+    scheduled_df = compute_email_schedule(config, classes_today, customers, logging)
+
+    logging.info('Creating EmailJob scheduler')
+    # scheduler = setup_scheduler(BackgroundScheduler, 'EmailJobs')
+
+    logging.info('Scheduling {} tasks'.format(scheduled_df.shape[0]))
+    # TODO: schedule jobs for each group
+    # scheduler.add_job(func=TEMP__SAY__HELLO,
+    #                   trigger='date',
+    #                   jobstore='mongodb-EmailJobs',
+    #                   name="Test",
+    #                   misfire_grace_time=10000,
+    #                   coalesce=False,
+    #                   max_instances=1,
+    #                   next_run_time=datetime.now(tz=pytz.timezone('Etc/GMT-5')) + timedelta(seconds=20),
+    #                   replace_existing=True)
+    # scheduler.start()  # commit the jobs
+    # scheduler.shutdown()  # remove connection
+
+    logging.info('Emails successfully scheduled')
 
 
 def get_classes_today(config, logger):
     schedule = common.read_df(config['schedule_path'], index_col=0)
     lookup = {i: weekday for i, weekday in enumerate(common.DAYS)}
     today = pd.Timestamp.today().weekday()
-    # today = 5  # DEBUG: HARDCODE SATURDAY
+    today = 5  # DEBUG: HARDCODE SATURDAY
     if today == 6:
         logger.info('No classes on Sunday')
         return None
@@ -78,8 +132,8 @@ def schedule_subset_time(subset_df, start_datetime, batch_size, wait_time, logge
             size = end - start
 
             # schedule current batch
-            logging.info('Scheduling {} [{}:{}/{}] to {}'
-                         .format(email_group, start, end, schedule_by_email_group.shape[0], current_datetime))
+            logger.info('Preparing {} [{}:{}/{}] to send at {}'
+                        .format(email_group, start, end, schedule_by_email_group.shape[0], current_datetime))
 
             my_idx = schedule_by_email_group.iloc[start:end].index
             schedule_by_email_group.loc[my_idx, 'ScheduledTime'] = [current_datetime] * size
@@ -93,7 +147,7 @@ def schedule_subset_time(subset_df, start_datetime, batch_size, wait_time, logge
     return scheduled_emails_df
 
 
-def compute_email_schedule(config, classes_today, logger):
+def compute_email_schedule(config, classes_today, customers, logger):
     logger.info('Computing email schedule')
 
     # create df and define types
@@ -119,7 +173,7 @@ def compute_email_schedule(config, classes_today, logger):
                                    'SubjectTitle': [email_group['subject_title']] * recipients.shape[0],
                                    'BodyPath': [email_group['body_path']] * recipients.shape[0]})
 
-        schedule_df = pd.concat((schedule_df, eg_df))
+        schedule_df = pd.concat((schedule_df, eg_df), sort=False)
 
     schedule_df.reset_index(inplace=True, drop=True)
 
@@ -147,38 +201,39 @@ def compute_email_schedule(config, classes_today, logger):
                                                   batch_wait_time_sec,
                                                   logger)))
 
-    logger.info('Scheduled {} emails'.format(schedule_df.shape[0]))
-
     return schedule_df
 
 
-if __name__ == '__main__':
+@pidfile()  # only run one instance of this script at a time
+def main():
     # get command line args
     args = common.handle_argparse()
 
     # configure logging
     logging = common.setup_logging(__file__, args.logs_dirpath)
 
-    # load config
-    config = common.read_config(args.config_filepath, logging)
+    # configure scheduler for daily CronJob
+    logging.info('Creating CronJob scheduler to schedule email jobs daily at 05:00')
+    config_scheduler = setup_scheduler(BackgroundScheduler, 'CronJob')
+    config_scheduler.add_job(id='daily_job',
+                             func=schedule_email_jobs,
+                             args=[args.logs_dirpath, args.config_filepath],
+                             jobstore='mongodb-CronJob',
+                             name="Daily CronJob scheduler",
+                             trigger='cron',
+                             day_of_week='mon-sun', hour=12+8, minute=26,  # run at 5AM M-Sa
+                             misfire_grace_time=(24-5)*60*60,              # allow misfire up to midnight
+                             coalesce=True,                                # if 5AM missed, run when possible
+                             max_instances=1,
+                             replace_existing=True)                        # replace if already exists in DB
 
-    if config is None:
-        logging.error('Invalid or missing config. Exiting {}...'.format(__file__))
-        sys.exit(1)
+    # configure scheduler for EmailJob, if they exist - allow processing of emails
+    email_scheduler = setup_scheduler(BlockingScheduler, 'EmailJob')
 
-    # process schedule and customer files
-    classes_today = get_classes_today(config, logging)
-    customers = get_customers(config, logging)
+    # start schedulers
+    config_scheduler.start()
+    email_scheduler.start()  # blocking call, will not exit
 
-    if classes_today is None or customers is None:
-        logging.warning('Exiting scheduler: no emails will be scheduled today.')
-        sys.exit(0)
 
-    # get df with email schedule
-    scheduled_df = compute_email_schedule(config, classes_today, logging)
-
-    # save to cache
-    common.save_df(scheduled_df, common.get_cache_schedule_path(), logging)
-    common.copyfile(args.config_filepath, common.get_cache_config_path(), logging)
-
-    logging.info('Emails successfully saved and scheduled')
+if __name__ == '__main__':
+    main()
