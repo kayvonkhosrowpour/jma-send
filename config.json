@@ -5,8 +5,8 @@
     "morning_and_noon": "08:00",
     "afternoon": "12:00"
   },
-  "batch_wait_time_sec": 2,
-  "batch_size": 3,
+  "batch_wait_time_sec": 100,
+  "batch_size": 1,
   "email_groups": [
     {
       "schedule_name": "Kids",
