@@ -2,12 +2,14 @@ import pandas as pd
 import numpy as np
 import traceback
 import pytz
+import send_emails
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.executors.pool import ProcessPoolExecutor
 from apscheduler.jobstores.mongodb import MongoDBJobStore
 from pid.decorator import pidfile
+from time import sleep
 from shared import common
 
 
@@ -17,7 +19,7 @@ def setup_scheduler(scheduler_type, job_type):
                            jobstore=MongoDBJobStore(database='EmailSchedule', collection=job_type))
 
     scheduler.add_executor(ProcessPoolExecutor(max_workers=20))
-    scheduler.timezone = pytz.timezone('Etc/GMT+5')
+    scheduler.timezone = pytz.timezone('America/Chicago')
 
     return scheduler
 
@@ -45,21 +47,25 @@ def schedule_email_jobs(logs_dirpath, config_filepath):
     scheduled_df = compute_email_schedule(config, classes_today, customers, logging)
 
     logging.info('Creating EmailJob scheduler')
-    # scheduler = setup_scheduler(BackgroundScheduler, 'EmailJobs')
+    scheduler = setup_scheduler(BackgroundScheduler, 'EmailJob')
 
     logging.info('Scheduling {} tasks'.format(scheduled_df.shape[0]))
-    # TODO: schedule jobs for each group
-    # scheduler.add_job(func=TEMP__SAY__HELLO,
-    #                   trigger='date',
-    #                   jobstore='mongodb-EmailJobs',
-    #                   name="Test",
-    #                   misfire_grace_time=10000,
-    #                   coalesce=False,
-    #                   max_instances=1,
-    #                   next_run_time=datetime.now(tz=pytz.timezone('Etc/GMT-5')) + timedelta(seconds=20),
-    #                   replace_existing=True)
-    # scheduler.start()  # commit the jobs
-    # scheduler.shutdown()  # remove connection
+
+    for _, row in scheduled_df.iterrows():
+        scheduler.add_job(func=send_emails.send_email,
+                          trigger='date',
+                          args=row,
+                          jobstore='mongodb-EmailJob',
+                          name='::'.join([str(c) for c in row[['EmailGroup', 'Recipient', 'SubjectTitle']]]),
+                          misfire_grace_time=10000,
+                          coalesce=False,
+                          max_instances=1,
+                          next_run_time=datetime.now(pytz.timezone('America/Chicago')) + timedelta(seconds=30),#row['ScheduledTime'],
+                          replace_existing=True)
+
+    scheduler.start()  # commit the jobs
+    sleep(30)  # wait for all jobs to be added
+    scheduler.shutdown()  # remove connection
 
     logging.info('Emails successfully scheduled')
 
@@ -151,14 +157,12 @@ def compute_email_schedule(config, classes_today, customers, logger):
     logger.info('Computing email schedule')
 
     # create df and define types
-    schedule_df = pd.DataFrame(columns=['Recipient', 'EmailGroup', 'SubjectTitle',
-                                        'BodyPath', 'ScheduledTime', 'DatetimeSent'])
-    schedule_df.Recipient = schedule_df.Recipient.astype(str)
+    schedule_df = pd.DataFrame(columns=['EmailGroup', 'Recipient', 'SubjectTitle', 'HtmlBody', 'ScheduledTime'])
     schedule_df.EmailGroup = schedule_df.EmailGroup.astype(str)
+    schedule_df.Recipient = schedule_df.Recipient.astype(str)
     schedule_df.SubjectTitle = schedule_df.SubjectTitle.astype(str)
-    schedule_df.BodyPath = schedule_df.BodyPath.astype(str)
+    schedule_df.HtmlBody = schedule_df.HtmlBody.astype(str)
     schedule_df.ScheduledTime = schedule_df.ScheduledTime.astype(np.datetime64)
-    schedule_df.DatetimeSent = schedule_df.DatetimeSent.astype(np.datetime64)
 
     # create df for each recipient in an email group
     for email_group in config['email_groups']:
@@ -167,11 +171,14 @@ def compute_email_schedule(config, classes_today, customers, logger):
         lower_recipients = [recip.lower() for recip in email_group['kicksite_recipients']]
         recipients = customers[customers.Program.str.lower().isin(lower_recipients)]
 
+        # read HTML
+        _, html = common.read_html(email_group['body_path'])
+
         # create new df for this group and concat
-        eg_df = pd.DataFrame(data={'Recipient': recipients.Email,
-                                   'EmailGroup': [email_group['schedule_name']] * recipients.shape[0],
+        eg_df = pd.DataFrame(data={'EmailGroup': [email_group['schedule_name']] * recipients.shape[0],
+                                   'Recipient': recipients.Email,
                                    'SubjectTitle': [email_group['subject_title']] * recipients.shape[0],
-                                   'BodyPath': [email_group['body_path']] * recipients.shape[0]})
+                                   'HtmlBody': [html] * recipients.shape[0]})
 
         schedule_df = pd.concat((schedule_df, eg_df), sort=False)
 
@@ -215,17 +222,18 @@ def main():
     # configure scheduler for daily CronJob
     logging.info('Creating CronJob scheduler to schedule email jobs daily at 05:00')
     config_scheduler = setup_scheduler(BackgroundScheduler, 'CronJob')
-    config_scheduler.add_job(id='daily_job',
-                             func=schedule_email_jobs,
-                             args=[args.logs_dirpath, args.config_filepath],
-                             jobstore='mongodb-CronJob',
-                             name="Daily CronJob scheduler",
-                             trigger='cron',
-                             day_of_week='mon-sun', hour=12+8, minute=26,  # run at 5AM M-Sa
-                             misfire_grace_time=(24-5)*60*60,              # allow misfire up to midnight
-                             coalesce=True,                                # if 5AM missed, run when possible
-                             max_instances=1,
-                             replace_existing=True)                        # replace if already exists in DB
+    # config_scheduler.add_job(id='daily_job',
+    #                          func=schedule_email_jobs,
+    #                          args=[args.logs_dirpath, args.config_filepath],
+    #                          jobstore='mongodb-CronJob',
+    #                          name="Daily CronJob scheduler",
+    #                          trigger='cron',
+    #                          day_of_week='mon-sun', hour=12+9, minute=8,  # run at 5AM M-Sa
+    #                          misfire_grace_time=(24-5)*60*60,              # allow misfire up to midnight
+    #                          coalesce=True,                                # if 5AM missed, run when possible
+    #                          max_instances=1,
+    #                          replace_existing=True)                        # replace if already exists in DB
+    schedule_email_jobs(args.logs_dirpath, args.config_filepath)
 
     # configure scheduler for EmailJob, if they exist - allow processing of emails
     email_scheduler = setup_scheduler(BlockingScheduler, 'EmailJob')

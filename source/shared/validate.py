@@ -1,6 +1,5 @@
 import os
 import re
-from bs4 import BeautifulSoup
 from cerberus import Validator
 from . import common
 
@@ -55,13 +54,10 @@ def validate_path_and_html(field, value, error):
         error(field, 'does not have .html extension')
         return
 
-    with open(os.path.normpath(value), 'r') as f:
-        lines = [line.rstrip() for line in f]
+    valid_html, _ = common.read_html(os.path.normpath(value))
 
-    if not bool(BeautifulSoup(''.join(lines), "html.parser").find()):
-        error(field, 'is invalid HTML. '
-              'use https://www.freeformatter.com/html-validator.html '
-              'to validate your html')
+    if not valid_html:
+        error(field, 'is invalid HTML. use https://www.freeformatter.com/html-validator.html to validate your html')
 
 
 def validate_email_groups_with_schedule_and_customers(config):

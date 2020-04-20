@@ -7,6 +7,9 @@ import logging
 import sys
 import argparse
 import shutil
+import pytz
+from datetime import datetime, timedelta
+from bs4 import BeautifulSoup
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from . import validate
@@ -105,15 +108,19 @@ def transform_config(config):
         email_group['body_path'] = os.path.normpath(email_group['body_path'])
 
     # set datetimes
-    config['start_send_time_map']['morning_and_noon'] = \
-        np.datetime64('{}T{}'.format(str(np.datetime64('today')),
-                                     config['start_send_time_map']['morning_and_noon']))
-    config['start_send_time_map']['afternoon'] = \
-        np.datetime64('{}T{}'.format(str(np.datetime64('today')),
-                                     config['start_send_time_map']['afternoon']))
+    today = datetime.now(tz=pytz.timezone('America/Chicago'))
+    morn_and_noon_time = datetime.strptime(config['start_send_time_map']['morning_and_noon'], '%H:%M')
+    afternoon_time = datetime.strptime(config['start_send_time_map']['afternoon'], '%H:%M')
+
+    config['start_send_time_map']['morning_and_noon'] = datetime(year=today.year, month=today.month, day=today.day,
+                                                                 hour=morn_and_noon_time.hour,
+                                                                 minute=morn_and_noon_time.minute)
+    config['start_send_time_map']['afternoon'] = datetime(year=today.year, month=today.month, day=today.day,
+                                                          hour=afternoon_time.hour,
+                                                          minute=afternoon_time.minute)
 
     # set scheduling config
-    config['batch_wait_time_sec'] = np.timedelta64(config['batch_wait_time_sec'], 's')
+    config['batch_wait_time_sec'] = timedelta(seconds=config['batch_wait_time_sec'])
 
 
 def get_cache_path():
@@ -174,6 +181,15 @@ def explode_str(df, col, sep):
     df[col] = df[col].str.strip()
 
     return df
+
+
+def read_html(filepath):
+    with open(os.path.normpath(filepath), 'r') as f:
+        lines = [line.rstrip() for line in f]
+
+    soup = BeautifulSoup(''.join(lines), "html.parser").find()
+
+    return bool(soup), soup.prettify() if soup is not None else None
 
 
 def send_email(to, _from, subject, html_body):
