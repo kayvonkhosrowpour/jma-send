@@ -44,7 +44,7 @@ def setup_logging(calling_filename, log_dirpath=None, level=logging.DEBUG):
     console_handler.setFormatter(log_formatter)
     root_logger.addHandler(console_handler)
 
-    logging.info('{} launched at {}'.format(calling_filename, str(pd.Timestamp.now(pytz.timezone('America/Chicago')))))
+    logging.info('{} launched at {}'.format(calling_filename, str(pd.Timestamp.now(pytz.timezone('Etc/GMT+5')))))
 
     return root_logger
 
@@ -109,16 +109,18 @@ def transform_config(config):
         email_group['body_path'] = os.path.normpath(email_group['body_path'])
 
     # set datetimes
-    today = datetime.now(tz=pytz.timezone('America/Chicago'))
+    today = datetime.now(tz=pytz.timezone('Etc/GMT+5'))
     morn_and_noon_time = datetime.strptime(config['start_send_time_map']['morning_and_noon'], '%H:%M')
     afternoon_time = datetime.strptime(config['start_send_time_map']['afternoon'], '%H:%M')
 
     config['start_send_time_map']['morning_and_noon'] = datetime(year=today.year, month=today.month, day=today.day,
                                                                  hour=morn_and_noon_time.hour,
-                                                                 minute=morn_and_noon_time.minute)
+                                                                 minute=morn_and_noon_time.minute,
+                                                                 tzinfo=pytz.timezone('Etc/GMT+5'))
     config['start_send_time_map']['afternoon'] = datetime(year=today.year, month=today.month, day=today.day,
                                                           hour=afternoon_time.hour,
-                                                          minute=afternoon_time.minute)
+                                                          minute=afternoon_time.minute,
+                                                          tzinfo=pytz.timezone('Etc/GMT+5'))
 
     # set scheduling config
     config['batch_wait_time_sec'] = timedelta(seconds=config['batch_wait_time_sec'])
@@ -191,6 +193,11 @@ def read_html(filepath):
     soup = BeautifulSoup(''.join(lines), "html.parser").find()
 
     return bool(soup), soup.prettify() if soup is not None else None
+
+
+def get_seconds_from_epoch(dt):
+    epoch = datetime.utcfromtimestamp(0).astimezone(pytz.timezone('Etc/GMT+5'))
+    return (dt - epoch).total_seconds()
 
 
 def send_email(to, _from, subject, html_body):

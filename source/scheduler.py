@@ -24,7 +24,7 @@ def setup_scheduler(scheduler_type, job_type, logger, debug=''):
 
     scheduler.add_executor(alias='executor-{}'.format(job_type),
                            executor=ProcessPoolExecutor(max_workers=20))
-    scheduler.timezone = pytz.timezone('America/Chicago')
+    scheduler.timezone = pytz.timezone('Etc/GMT+5')
 
     return scheduler
 
@@ -65,9 +65,9 @@ def schedule_email_jobs(logs_dirpath, config_filepath):
                                 misfire_grace_time=int(row['GraceTimeSeconds']),  # 100000000
                                 coalesce=False,
                                 max_instances=1,
-                                next_run_time=row['ScheduledTime'],  # DEBUG datetime.now(pytz.timezone('America/Chicago')) + timedelta(seconds=10),
+                                next_run_time=row['ScheduledTime'],  # DEBUG datetime.now(pytz.timezone('Etc/GMT+5')) + timedelta(seconds=10),
                                 replace_existing=True)
-        logging.info('Added job with ID {}'.format(job.id))
+        logging.info('Added job with ID {} expiring at {}'.format(job.id, int(row['GraceTimeSeconds'])))
 
     logging.info('Sleeping until jobs are added to queue...')
     while len(scheduler.get_jobs(pending=True)) > 0:
@@ -83,7 +83,7 @@ def get_classes_today(config, logger):
 
     schedule = common.read_df(config['schedule_path'], index_col=0)
     lookup = {i: weekday for i, weekday in enumerate(common.DAYS)}
-    today = pd.Timestamp.today(tz=pytz.timezone('America/Chicago')).weekday()
+    today = pd.Timestamp.today(tz=pytz.timezone('Etc/GMT+5')).weekday()
     # today = 5  # DEBUG: HARDCODE SATURDAY
     if today == 6:
         logger.info('No classes on Sunday')
@@ -117,7 +117,6 @@ def get_customers(config, logger):
                                       'Programs': 'Program'}, axis=1)
         customers = customers[['Email', 'Program']]
         customers.Email = customers.Email.str.lower()
-        customers.drop_duplicates(subset=['Email', 'Program'], inplace=True)
     except Exception:
         logger.error('Could not process customers with exception: {}'
                      .format(traceback.format_exc()))
@@ -167,11 +166,10 @@ def compute_email_schedule(config, classes_today, customers, logger):
     morning_and_noon_scheduled_df = schedule_df[schedule_df.EmailGroup.isin(morning_and_noon_classes)]
     afternoon_scheduled_df = schedule_df[schedule_df.EmailGroup.isin(afternoon_classes)]
 
-    # set time of class
     morning_and_noon_scheduled_df.ClassTime = \
-        morning_and_noon_scheduled_df.EmailGroup.apply(lambda x: classes_today[x])
+        morning_and_noon_scheduled_df.EmailGroup.apply(lambda x: classes_today[x]).dt.tz_localize('Etc/GMT+5')
     afternoon_scheduled_df.ClassTime = \
-        afternoon_scheduled_df.EmailGroup.apply(lambda x: classes_today[x])
+        afternoon_scheduled_df.EmailGroup.apply(lambda x: classes_today[x]).dt.tz_localize('Etc/GMT+5')
 
     # get scheduling configuration
     batch_size = config['batch_size']
@@ -194,20 +192,18 @@ def compute_email_schedule(config, classes_today, customers, logger):
 
 def schedule_subset_time(subset_df, start_datetime, batch_size, wait_time, logger):
     scheduled_emails_df = pd.DataFrame()
-    current_datetime = start_datetime
+    current_datetime = start_datetime.astimezone(pytz.timezone('Etc/GMT+5'))
 
     # process each email group
     for email_group in subset_df.EmailGroup.unique():
 
         schedule_by_email_group = subset_df[subset_df.EmailGroup == email_group].copy()
 
+        # don't send duplicate emails
+        schedule_by_email_group.drop_duplicates(subset=['Recipient', 'EmailGroup'], inplace=True)
+
         logger.info("email_group '{}' has {} recipients".format(email_group,
                                                                 schedule_by_email_group.shape[0]))
-
-        # get class for this group
-        unique_time = schedule_by_email_group.ClassTime.unique()
-        assert len(unique_time) == 1
-        class_time = pd.Timestamp(unique_time[0]).to_pydatetime()
 
         idx = 0
 
@@ -226,15 +222,17 @@ def schedule_subset_time(subset_df, start_datetime, batch_size, wait_time, logge
             batch_idx = schedule_by_email_group.iloc[start:end].index
             schedule_by_email_group.loc[batch_idx, 'ScheduledTime'] = [current_datetime] * size
 
-            # at least 30 minutes before class time (if already passed, then set to grace time of 1 to fail)
-            schedule_by_email_group.loc[batch_idx, 'GraceTimeSeconds'] = \
-                [int(max(1, (current_datetime - class_time).total_seconds() - 60 * 30))] * size
-
             # move to next batch and datetime
             idx += batch_size
             current_datetime += wait_time
 
         scheduled_emails_df = pd.concat((scheduled_emails_df, schedule_by_email_group))
+
+    # at least 30 minutes before class time (if already passed, then set to grace time of 1 to fail)
+    for idx in scheduled_emails_df.index:
+        ct = scheduled_emails_df.loc[idx, 'ClassTime'].to_pydatetime().astimezone(pytz.timezone('Etc/GMT+5'))
+        st = scheduled_emails_df.loc[idx, 'ScheduledTime'].astimezone(pytz.timezone('Etc/GMT+5'))
+        scheduled_emails_df.loc[idx, 'GraceTimeSeconds'] = max(1, int((ct - st).total_seconds()) - 30 * 60)
 
     return scheduled_emails_df
 
@@ -248,7 +246,7 @@ def main():
     logging = common.setup_logging(__file__, args.logs_dirpath)
 
     # configure scheduler for daily CronJob
-    config_scheduler = setup_scheduler(BackgroundScheduler, 'CronJob', logging, '244')
+    config_scheduler = setup_scheduler(BackgroundScheduler, 'CronJob', logging, 'main')
     config_scheduler.start()
     config_scheduler.add_job(id='daily_job',
                              func=schedule_email_jobs,
@@ -257,16 +255,16 @@ def main():
                              executor='executor-CronJob',
                              name="Daily CronJob scheduler",
                              trigger='cron',
-                             day_of_week='mon-sat', hour=5, minute=00,     # run at 5AM M-Sa
-                             # day_of_week='mon-sun',  # DEBUG configuration
-                             # hour=datetime.datetime.now(pytz.timezone('America/Chicago')).hour,
-                             # minute=datetime.datetime.now(pytz.timezone('America/Chicago')).minute + 1,
-                             timezone=pytz.timezone('America/Chicago'),
+                             # day_of_week='mon-sat', hour=5, minute=00,     # run at 5AM M-Sa
+                             day_of_week='mon-sun',  # DEBUG configuration
+                             hour=datetime.datetime.now(pytz.timezone('Etc/GMT+5')).hour,
+                             minute=datetime.datetime.now(pytz.timezone('Etc/GMT+5')).minute + 1,
+                             timezone=pytz.timezone('Etc/GMT+5'),
                              misfire_grace_time=(24-5)*60*60,              # allow misfire up to midnight
                              coalesce=True,                                # if 5AM missed, run when possible
                              max_instances=1,
                              replace_existing=True)                        # replace if already exists in DB
-    # schedule_email_jobs(args.config_filepath)  # DEBUG
+    # schedule_email_jobs(args.logs_dirpath, args.config_filepath)  # DEBUG
 
     # configure scheduler for EmailJob, if they exist - allow processing of emails
     logging.info('First-time startup: sleeping until jobs are configured...')
