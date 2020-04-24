@@ -29,23 +29,24 @@ def handle_argparse():
     return parser.parse_args()
 
 
-def setup_logging(calling_filename, log_dirpath, level=logging.DEBUG):
+def setup_logging(calling_filename, log_dirpath=None, level=logging.DEBUG):
     log_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
 
-    file_handler = logging.FileHandler(os.path.normpath(os.path.join(log_dirpath,
-                                                                     LOG_FILENAME)))
-    file_handler.setFormatter(log_formatter)
-    root_logger.addHandler(file_handler)
+    if log_dirpath is not None:
+        file_handler = logging.FileHandler(os.path.normpath(os.path.join(log_dirpath,
+                                                                         LOG_FILENAME)))
+        file_handler.setFormatter(log_formatter)
+        root_logger.addHandler(file_handler)
 
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(log_formatter)
     root_logger.addHandler(console_handler)
 
-    logging.info('{} launched at {}'.format(calling_filename, str(pd.Timestamp.today())))
+    logging.info('{} launched at {}'.format(calling_filename, str(pd.Timestamp.now(pytz.timezone('America/Chicago')))))
 
-    return logging
+    return root_logger
 
 
 def prepare_filepath(filepath, _raise=True):
