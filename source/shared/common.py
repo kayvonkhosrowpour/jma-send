@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import os
 import json
-import smtplib
 import logging
 import sys
 import argparse
@@ -10,8 +9,6 @@ import shutil
 import pytz
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from . import validate
 
 
@@ -116,11 +113,13 @@ def transform_config(config):
     config['start_send_time_map']['morning_and_noon'] = datetime(year=today.year, month=today.month, day=today.day,
                                                                  hour=morn_and_noon_time.hour,
                                                                  minute=morn_and_noon_time.minute,
-                                                                 tzinfo=pytz.timezone('Etc/GMT+5'))
+                                                                 tzinfo=pytz.timezone('America/Chicago'))\
+                                                        .replace(tzinfo=pytz.timezone('Etc/GMT+5'))
     config['start_send_time_map']['afternoon'] = datetime(year=today.year, month=today.month, day=today.day,
                                                           hour=afternoon_time.hour,
                                                           minute=afternoon_time.minute,
-                                                          tzinfo=pytz.timezone('Etc/GMT+5'))
+                                                          tzinfo=pytz.timezone('America/Chicago'))\
+                                                 .replace(tzinfo=pytz.timezone('Etc/GMT+5'))
 
     # set scheduling config
     config['batch_wait_time_sec'] = timedelta(seconds=config['batch_wait_time_sec'])
@@ -198,20 +197,3 @@ def read_html(filepath):
 def get_seconds_from_epoch(dt):
     epoch = datetime.utcfromtimestamp(0).astimezone(pytz.timezone('Etc/GMT+5'))
     return (dt - epoch).total_seconds()
-
-
-def send_email(to, _from, subject, html_body):
-    # hardcode for safety
-    to = ['fake_email@gmail.com']
-    # create email
-    msg = MIMEMultipart()
-    msg['From'] = _from
-    msg['To'] = ','.join(to)
-    msg['Subject'] = subject
-    msg.attach(MIMEText(html_body, 'html'))
-
-    # send the message via our SMTP server
-    s = smtplib.SMTP('localhost:1025')  # TODO: replace with exchange
-    s.sendmail(_from, to, msg.as_string())
-    s.quit()
-

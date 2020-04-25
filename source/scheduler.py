@@ -58,11 +58,11 @@ def schedule_email_jobs(logs_dirpath, config_filepath):
     for _, row in scheduled_df.iterrows():
         job = scheduler.add_job(func=send_emails.send_email,
                                 trigger='date',
-                                args=row,
+                                args=row.tolist() + [logs_dirpath],
                                 jobstore='mongodb-EmailJob',
                                 executor='executor-EmailJob',
                                 name='::'.join([str(c) for c in row[['EmailGroup', 'Recipient']]]),
-                                misfire_grace_time=int(row['GraceTimeSeconds']),  # 100000000
+                                misfire_grace_time=int(row['GraceTimeSeconds']), # 100000000
                                 coalesce=False,
                                 max_instances=1,
                                 next_run_time=row['ScheduledTime'],  # DEBUG datetime.now(pytz.timezone('Etc/GMT+5')) + timedelta(seconds=10),
@@ -255,10 +255,10 @@ def main():
                              executor='executor-CronJob',
                              name="Daily CronJob scheduler",
                              trigger='cron',
-                             # day_of_week='mon-sat', hour=5, minute=00,     # run at 5AM M-Sa
-                             day_of_week='mon-sun',  # DEBUG configuration
-                             hour=datetime.datetime.now(pytz.timezone('Etc/GMT+5')).hour,
-                             minute=datetime.datetime.now(pytz.timezone('Etc/GMT+5')).minute + 1,
+                             day_of_week='mon-sat', hour=5, minute=00,     # run at 5AM M-Sa
+                             # day_of_week='mon-sun',  # DEBUG configuration
+                             # hour=datetime.datetime.now(pytz.timezone('Etc/GMT+5')).hour,
+                             # minute=datetime.datetime.now(pytz.timezone('Etc/GMT+5')).minute + 1,
                              timezone=pytz.timezone('Etc/GMT+5'),
                              misfire_grace_time=(24-5)*60*60,              # allow misfire up to midnight
                              coalesce=True,                                # if 5AM missed, run when possible
