@@ -86,7 +86,7 @@ def get_classes_today(config, logger):
     today = pd.Timestamp.today(tz=pytz.timezone('Etc/GMT+5')).weekday()
     # today = 5  # DEBUG: HARDCODE SATURDAY
     if today == 6:
-        logger.info('No classes on Sunday')
+        logger.warning('No classes on Sunday')
         return None
 
     today = lookup[today]
@@ -267,10 +267,6 @@ def main():
     # schedule_email_jobs(args.logs_dirpath, args.config_filepath)  # DEBUG
 
     # configure scheduler for EmailJob, if they exist - allow processing of emails
-    logging.info('First-time startup: sleeping until jobs are configured...')
-    while len(config_scheduler.get_jobs(pending=True)) > 0:
-        sleep(1)
-
     email_scheduler = setup_scheduler(BlockingScheduler, 'EmailJob', logging, 'main')
     email_scheduler.start()  # blocking call, will not exit
 
