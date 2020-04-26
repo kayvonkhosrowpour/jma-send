@@ -10,7 +10,9 @@ import pytz
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from . import validate
-
+from apscheduler.executors.pool import ProcessPoolExecutor
+from apscheduler.jobstores.mongodb import MongoDBJobStore
+import threading
 
 DAYS = ['M', 'T', 'W', 'Th', 'F', 'Sa']
 LOG_FILENAME = 'jma_sender.log'
@@ -18,10 +20,12 @@ SCHEDULED_EMAILS_FILENAME = 'scheduled.csv'
 CACHED_CONFIG_FILENAME = 'cached_config.json'
 
 
-def handle_argparse():
+def handle_argparse(config_filepath=True, logs_dirpath=True):
     parser = argparse.ArgumentParser(description='Schedule emails to be sent today.')
-    parser.add_argument('--config_filepath', type=str, help='/path/to/config.json')
-    parser.add_argument('--logs_dirpath', type=str, help='/path/to/logs')
+    if config_filepath:
+        parser.add_argument('--config_filepath', type=str, help='/path/to/config.json')
+    if logs_dirpath:
+        parser.add_argument('--logs_dirpath', type=str, help='/path/to/logs')
 
     return parser.parse_args()
 
@@ -197,3 +201,18 @@ def read_html(filepath):
 def get_seconds_from_epoch(dt):
     epoch = datetime.utcfromtimestamp(0).astimezone(pytz.timezone('Etc/GMT+5'))
     return (dt - epoch).total_seconds()
+
+
+def setup_scheduler(scheduler_type, job_type, logger, debug=''):
+    logger.info('Creating {} scheduler for {} jobs [{}-{}]'.format(scheduler_type, job_type, debug,
+                                                                   threading.current_thread().ident))
+
+    scheduler = scheduler_type()
+    scheduler.add_jobstore(alias='mongodb-{}'.format(job_type),
+                           jobstore=MongoDBJobStore(database='EmailSchedule', collection=job_type))
+
+    scheduler.add_executor(alias='executor-{}'.format(job_type),
+                           executor=ProcessPoolExecutor(max_workers=20))
+    scheduler.timezone = pytz.timezone('Etc/GMT+5')
+
+    return scheduler

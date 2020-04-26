@@ -3,30 +3,12 @@ import numpy as np
 import traceback
 import pytz
 import send_emails
-import threading
 import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers.blocking import BlockingScheduler
-from apscheduler.executors.pool import ProcessPoolExecutor
-from apscheduler.jobstores.mongodb import MongoDBJobStore
 from pid.decorator import pidfile
 from time import sleep
 from shared import common
-
-
-def setup_scheduler(scheduler_type, job_type, logger, debug=''):
-    logger.info('Creating {} scheduler for {} jobs [{}-{}]'.format(scheduler_type, job_type, debug,
-                                                                   threading.current_thread().ident))
-
-    scheduler = scheduler_type()
-    scheduler.add_jobstore(alias='mongodb-{}'.format(job_type),
-                           jobstore=MongoDBJobStore(database='EmailSchedule', collection=job_type))
-
-    scheduler.add_executor(alias='executor-{}'.format(job_type),
-                           executor=ProcessPoolExecutor(max_workers=20))
-    scheduler.timezone = pytz.timezone('Etc/GMT+5')
-
-    return scheduler
 
 
 def schedule_email_jobs(logs_dirpath, config_filepath):
@@ -51,7 +33,7 @@ def schedule_email_jobs(logs_dirpath, config_filepath):
     # get df with email schedule
     scheduled_df = compute_email_schedule(config, classes_today, customers, logging)
 
-    scheduler = setup_scheduler(BackgroundScheduler, 'EmailJob', logging, 'schedule_email_jobs')
+    scheduler = common.setup_scheduler(BackgroundScheduler, 'EmailJob', logging, 'schedule_email_jobs')
     scheduler.start()
     logging.info('Scheduling {} tasks'.format(scheduled_df.shape[0]))
 
@@ -246,7 +228,7 @@ def main():
     logging = common.setup_logging(__file__, args.logs_dirpath)
 
     # configure scheduler for daily CronJob
-    config_scheduler = setup_scheduler(BackgroundScheduler, 'CronJob', logging, 'main')
+    config_scheduler = common.setup_scheduler(BackgroundScheduler, 'CronJob', logging, 'main')
     config_scheduler.start()
     config_scheduler.add_job(id='daily_job',
                              func=schedule_email_jobs,
@@ -267,7 +249,7 @@ def main():
     # schedule_email_jobs(args.logs_dirpath, args.config_filepath)  # DEBUG
 
     # configure scheduler for EmailJob, if they exist - allow processing of emails
-    email_scheduler = setup_scheduler(BlockingScheduler, 'EmailJob', logging, 'main')
+    email_scheduler = common.setup_scheduler(BlockingScheduler, 'EmailJob', logging, 'main')
     email_scheduler.start()  # blocking call, will not exit
 
 
