@@ -140,6 +140,10 @@ def compute_email_schedule(config, classes_today, customers, logger):
 
     schedule_df.reset_index(inplace=True, drop=True)
 
+    # get scheduling configuration
+    batch_size = config['batch_size']
+    batch_wait_time_sec = config['batch_wait_time_sec']
+
     # split into morning_and_noon and afternoon by class time
     today_at_noon = np.datetime64(str(np.datetime64('today')) + 'T12:00')
     morning_and_noon_classes = classes_today[classes_today <= today_at_noon].index.tolist()
@@ -148,26 +152,26 @@ def compute_email_schedule(config, classes_today, customers, logger):
     morning_and_noon_scheduled_df = schedule_df[schedule_df.EmailGroup.isin(morning_and_noon_classes)]
     afternoon_scheduled_df = schedule_df[schedule_df.EmailGroup.isin(afternoon_classes)]
 
-    morning_and_noon_scheduled_df.ClassTime = \
-        morning_and_noon_scheduled_df.EmailGroup.apply(lambda x: classes_today[x]).dt.tz_localize('Etc/GMT+5')
-    afternoon_scheduled_df.ClassTime = \
-        afternoon_scheduled_df.EmailGroup.apply(lambda x: classes_today[x]).dt.tz_localize('Etc/GMT+5')
+    if morning_and_noon_scheduled_df.shape[0] > 0:
+        morning_and_noon_scheduled_df.ClassTime = \
+            morning_and_noon_scheduled_df.EmailGroup.apply(lambda x: classes_today[x]).dt.tz_localize('Etc/GMT+5')
+        morning_and_noon_scheduled_df = schedule_subset_time(morning_and_noon_scheduled_df,
+                                                             config['start_send_time_map']['morning_and_noon'],
+                                                             batch_size,
+                                                             batch_wait_time_sec,
+                                                             logger)
+    if afternoon_scheduled_df.shape[0] > 0:
+        afternoon_scheduled_df.ClassTime = \
+            afternoon_scheduled_df.EmailGroup.apply(lambda x: classes_today[x]).dt.tz_localize('Etc/GMT+5')
+        afternoon_scheduled_df = schedule_subset_time(afternoon_scheduled_df,
+                                                      config['start_send_time_map']['afternoon'],
+                                                      batch_size,
+                                                      batch_wait_time_sec,
+                                                      logger)
 
-    # get scheduling configuration
-    batch_size = config['batch_size']
-    batch_wait_time_sec = config['batch_wait_time_sec']
 
     # schedule the emails
-    schedule_df = pd.concat((schedule_subset_time(morning_and_noon_scheduled_df,
-                                                  config['start_send_time_map']['morning_and_noon'],
-                                                  batch_size,
-                                                  batch_wait_time_sec,
-                                                  logger),
-                             schedule_subset_time(afternoon_scheduled_df,
-                                                  config['start_send_time_map']['afternoon'],
-                                                  batch_size,
-                                                  batch_wait_time_sec,
-                                                  logger)))
+    schedule_df = pd.concat((morning_and_noon_scheduled_df, afternoon_scheduled_df))
 
     return schedule_df
 
