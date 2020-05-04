@@ -7,12 +7,15 @@ import sys
 import argparse
 import shutil
 import pytz
+import threading
+from time import sleep
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
-from . import validate
 from apscheduler.executors.pool import ProcessPoolExecutor
 from apscheduler.jobstores.mongodb import MongoDBJobStore
-import threading
+from concurrent.futures.process import BrokenProcessPool
+from . import validate
+
 
 DAYS = ['M', 'T', 'W', 'Th', 'F', 'Sa']
 LOG_FILENAME = 'jma_sender.log'
@@ -203,6 +206,27 @@ def get_seconds_from_epoch(dt):
     return (dt - epoch).total_seconds()
 
 
+class FixedPoolExecutor(ProcessPoolExecutor):
+    def __init__(self, max_workers=20):
+        self._max_workers = max_workers
+        super().__init__(max_workers)
+
+    def _do_submit_job(self, job, run_times):
+        # try submitting up to 10 times with 10 sec delay each time
+        delay = 10
+        for i in range(1, 7):
+            try:
+                return super()._do_submit_job(job, run_times)
+            except BrokenProcessPool:
+                self._logger.warning('Process pool is broken. Restarting executor. Retry {} of {} with delay {} sec'
+                                     .format(i, 6, delay))
+                self._pool.shutdown(wait=True)
+                self._pool = ProcessPoolExecutor(int(self._max_workers))
+                sleep(delay)
+
+        return super()._do_submit_job(job, run_times)
+
+
 def setup_scheduler(scheduler_type, job_type, logger, debug=''):
     logger.info('Creating {} scheduler for {} jobs [{}-{}]'.format(scheduler_type, job_type, debug,
                                                                    threading.current_thread().ident))
@@ -212,7 +236,7 @@ def setup_scheduler(scheduler_type, job_type, logger, debug=''):
                            jobstore=MongoDBJobStore(database='EmailSchedule', collection=job_type))
 
     scheduler.add_executor(alias='executor-{}'.format(job_type),
-                           executor=ProcessPoolExecutor(max_workers=20))
+                           executor=FixedPoolExecutor(max_workers=20))
     scheduler.timezone = pytz.timezone('Etc/GMT+5')
 
     return scheduler
